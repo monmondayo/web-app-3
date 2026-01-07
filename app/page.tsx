@@ -73,8 +73,10 @@ export default function Home() {
     setResult(null);
 
     try {
-      // リセールバリューを取得
-      const response = await fetch(`/api/resale?keyword=${encodeURIComponent(keyword)}`);
+      // リセールバリューを取得（商品価格も渡す）
+      const response = await fetch(
+        `/api/resale?keyword=${encodeURIComponent(keyword)}&price=${product.price}`
+      );
       const data = await response.json();
 
       if (!response.ok) {
@@ -92,6 +94,11 @@ export default function Home() {
         calculation,
         analysis: data.analysis
       });
+
+      // 推定データの場合は情報メッセージを表示
+      if (data.message) {
+        setInfoMessage(data.message);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : '計算中にエラーが発生しました');
     } finally {
