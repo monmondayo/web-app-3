@@ -28,16 +28,39 @@ export default function ResultCard({ result, analysis, productName }: ResultCard
         scale: 2,
         logging: true, // デバッグ用にログを有効化
         useCORS: true,
-        allowTaint: true, // 一時的にtrueに変更
+        allowTaint: true,
         foreignObjectRendering: false, // SVGレンダリングを無効化
         removeContainer: true,
         imageTimeout: 0,
         onclone: (clonedDoc) => {
-          // クローンされたドキュメントのスタイルを確認
-          const clonedElement = clonedDoc.querySelector('[data-html2canvas-ignore]');
-          if (clonedElement) {
-            clonedElement.remove();
+          // クローンされたドキュメントのbodyからグラデーションを削除
+          const body = clonedDoc.body;
+          if (body) {
+            body.style.background = '#ffffff';
+            body.style.backgroundImage = 'none';
           }
+
+          // すべての要素からグラデーションを削除
+          const allElements = clonedDoc.querySelectorAll('*');
+          const clonedWindow = clonedDoc.defaultView;
+          if (clonedWindow) {
+            allElements.forEach((el) => {
+              const htmlEl = el as HTMLElement;
+              try {
+                const styles = clonedWindow.getComputedStyle(htmlEl);
+                const bgImage = styles.backgroundImage;
+                if (bgImage && bgImage.includes('gradient')) {
+                  htmlEl.style.backgroundImage = 'none';
+                }
+              } catch (e) {
+                // スタイル取得に失敗した場合は無視
+              }
+            });
+          }
+
+          // data-html2canvas-ignore要素を削除
+          const ignoredElements = clonedDoc.querySelectorAll('[data-html2canvas-ignore]');
+          ignoredElements.forEach(el => el.remove());
         }
       });
 
