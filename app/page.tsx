@@ -66,16 +66,22 @@ export default function Home() {
     }
   };
 
-  const handleSelectProduct = async (product: Product) => {
+  const handleSelectProduct = (product: Product) => {
     setSelectedProduct(product);
-    setLoading(true);
     setError('');
     setResult(null);
+  };
+
+  const handleCalculate = async () => {
+    if (!selectedProduct) return;
+
+    setLoading(true);
+    setError('');
 
     try {
       // リセールバリューを取得（商品価格も渡す）
       const response = await fetch(
-        `/api/resale?keyword=${encodeURIComponent(keyword)}&price=${product.price}`
+        `/api/resale?keyword=${encodeURIComponent(keyword)}&price=${selectedProduct.price}`
       );
       const data = await response.json();
 
@@ -85,7 +91,7 @@ export default function Home() {
 
       // 実質タダを計算
       const calculation = calculateJissitsuTada(
-        product.price,
+        selectedProduct.price,
         data.analysis.estimatedResaleValue,
         yearsOfUse
       );
@@ -452,11 +458,20 @@ export default function Home() {
         {/* 使用年数設定（検索モードで商品選択後） */}
         {searchMode === 'search' && selectedProduct && !result && (
           <div className="bg-white border border-indigo-200 rounded-2xl p-8 mb-8 shadow-lg">
+            {/* 選択した商品情報 */}
+            <div className="mb-6 pb-4 border-b border-gray-200">
+              <p className="text-gray-600 text-sm mb-2">選択した商品</p>
+              <p className="text-gray-900 font-serif text-lg">{selectedProduct.name}</p>
+              <p className="text-indigo-600 font-bold text-2xl mt-2">
+                ¥{selectedProduct.price.toLocaleString()}
+              </p>
+            </div>
+
             <div className="flex items-center gap-2 mb-4">
               <Calculator className="w-5 h-5 text-indigo-600" />
               <h3 className="text-xl font-serif text-gray-800">使用期間を設定</h3>
             </div>
-            <div className="space-y-4">
+            <div className="space-y-6">
               <div>
                 <label className="block text-gray-700 mb-2 text-sm">
                   何年使用する予定ですか？
@@ -475,6 +490,22 @@ export default function Home() {
                   <span>30年</span>
                 </div>
               </div>
+
+              {/* 計算ボタン */}
+              <button
+                onClick={handleCalculate}
+                disabled={loading}
+                className="w-full bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-400 text-white font-bold py-4 rounded-lg transition-all transform hover:scale-105 disabled:transform-none disabled:cursor-not-allowed font-serif text-lg shadow-md"
+              >
+                {loading ? '計算中...' : '実質タダを計算する'}
+              </button>
+
+              {/* エラー表示 */}
+              {error && (
+                <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                  <p className="text-red-700 text-sm">{error}</p>
+                </div>
+              )}
             </div>
           </div>
         )}
