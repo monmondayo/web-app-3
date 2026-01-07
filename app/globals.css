@@ -1,8 +1,8 @@
 @import "tailwindcss";
 
 :root {
-  --background: #000000;
-  --foreground: #ffffff;
+  --background: #ffffff;
+  --foreground: #1a1a1a;
   --font-noto-sans: 'Noto Sans JP', sans-serif;
   --font-noto-serif: 'Noto Serif JP', serif;
 }
@@ -13,9 +13,10 @@
 }
 
 body {
-  background: var(--background);
+  background: linear-gradient(135deg, #f5f7fa 0%, #e3e7ed 100%);
   color: var(--foreground);
   font-family: var(--font-noto-sans);
+  min-height: 100vh;
 }
 
 /* 明朝体フォント用のユーティリティクラス */
@@ -34,14 +35,14 @@ html {
 }
 
 ::-webkit-scrollbar-track {
-  background: #1a1a1a;
+  background: #e5e7eb;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #ca8a04;
+  background: #6366f1;
   border-radius: 5px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #a16207;
+  background: #4f46e5;
 }

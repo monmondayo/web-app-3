@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Search, Sparkles, Calculator, Crown, PenLine, List } from 'lucide-react';
+import { Search, Sparkles, Calculator, Crown, PenLine, List, TrendingUp } from 'lucide-react';
 import { Product, ResaleAnalysis, JissitsuTadaResult } from '@/lib/types';
 import { calculateJissitsuTada, calculateResaleValue } from '@/lib/resaleCalculator';
 import ResultCard from '@/components/ResultCard';
@@ -186,19 +186,19 @@ export default function Home() {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-black via-gray-900 to-black text-white">
+    <div className="min-h-screen text-gray-900">
       {/* ヘッダー */}
-      <header className="border-b border-yellow-700/30 bg-black/50 backdrop-blur-sm sticky top-0 z-50">
+      <header className="border-b border-indigo-200 bg-white/80 backdrop-blur-sm sticky top-0 z-50 shadow-sm">
         <div className="container mx-auto px-4 py-6">
           <div className="flex items-center justify-center gap-3">
-            <Crown className="w-8 h-8 text-yellow-500" />
-            <h1 className="text-4xl font-serif text-yellow-500 tracking-wider">
+            <Sparkles className="w-8 h-8 text-indigo-600" />
+            <h1 className="text-4xl font-serif text-indigo-900 tracking-wide">
               実質タダ電卓 Pro
             </h1>
-            <Crown className="w-8 h-8 text-yellow-500" />
+            <Sparkles className="w-8 h-8 text-indigo-600" />
           </div>
-          <p className="text-center text-yellow-600 mt-2 font-serif text-sm">
-            Nagoya Vibe Edition - 高級品の本当の価値を可視化
+          <p className="text-center text-indigo-600 mt-2 font-serif text-sm">
+            リセールバリューで賢い買い物を可視化
           </p>
         </div>
       </header>
@@ -209,13 +209,13 @@ export default function Home() {
         {!result && (
           <div className="text-center mb-12">
             <div className="flex items-center justify-center gap-2 mb-4">
-              <Sparkles className="w-6 h-6 text-yellow-500" />
-              <h2 className="text-2xl font-serif text-yellow-400">
+              <TrendingUp className="w-6 h-6 text-indigo-600" />
+              <h2 className="text-2xl font-serif text-gray-800">
                 リセールバリューで「実質タダ」を証明
               </h2>
-              <Sparkles className="w-6 h-6 text-yellow-500" />
+              <TrendingUp className="w-6 h-6 text-indigo-600" />
             </div>
-            <p className="text-gray-400 max-w-2xl mx-auto leading-relaxed">
+            <p className="text-gray-600 max-w-2xl mx-auto leading-relaxed">
               欲しい高級品を検索すると、中古相場データから推定リセールバリューを自動計算。
               購入価格との差額を日割りで表示し、「実質タダ」であることを数字で証明します。
             </p>
@@ -229,8 +229,8 @@ export default function Home() {
               onClick={() => setSearchMode('search')}
               className={`flex items-center gap-2 px-6 py-3 rounded-lg font-serif transition-all ${
                 searchMode === 'search'
-                  ? 'bg-yellow-600 text-black'
-                  : 'bg-gray-800 text-yellow-500 hover:bg-gray-700'
+                  ? 'bg-indigo-600 text-white shadow-lg'
+                  : 'bg-white text-indigo-600 hover:bg-indigo-50 border border-indigo-200'
               }`}
             >
               <List className="w-4 h-4" />
@@ -240,8 +240,8 @@ export default function Home() {
               onClick={() => setSearchMode('manual')}
               className={`flex items-center gap-2 px-6 py-3 rounded-lg font-serif transition-all ${
                 searchMode === 'manual'
-                  ? 'bg-yellow-600 text-black'
-                  : 'bg-gray-800 text-yellow-500 hover:bg-gray-700'
+                  ? 'bg-indigo-600 text-white shadow-lg'
+                  : 'bg-white text-indigo-600 hover:bg-indigo-50 border border-indigo-200'
               }`}
             >
               <PenLine className="w-4 h-4" />
@@ -253,10 +253,10 @@ export default function Home() {
         {/* 検索モード */}
         {searchMode === 'search' && !result && (
           <>
-            <div className="bg-gradient-to-br from-gray-900 to-black border-2 border-yellow-700/50 rounded-2xl p-8 shadow-2xl mb-8">
+            <div className="bg-white border border-indigo-200 rounded-2xl p-8 shadow-lg mb-8">
               <div className="flex items-center gap-2 mb-4">
-                <Search className="w-5 h-5 text-yellow-500" />
-                <h3 className="text-xl font-serif text-yellow-500">商品を検索</h3>
+                <Search className="w-5 h-5 text-indigo-600" />
+                <h3 className="text-xl font-serif text-gray-800">商品を検索</h3>
               </div>
 
               <div className="space-y-4">
@@ -267,12 +267,12 @@ export default function Home() {
                     onChange={(e) => setKeyword(e.target.value)}
                     onKeyPress={handleKeyPress}
                     placeholder="例: ロレックス サブマリーナ"
-                    className="flex-1 bg-black/50 border border-yellow-700/50 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-yellow-500 focus:ring-1 focus:ring-yellow-500"
+                    className="flex-1 bg-gray-50 border border-gray-300 rounded-lg px-4 py-3 text-gray-900 placeholder-gray-500 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
                   />
                   <button
                     onClick={handleSearch}
                     disabled={loading}
-                    className="bg-gradient-to-r from-yellow-600 to-yellow-500 hover:from-yellow-700 hover:to-yellow-600 disabled:from-gray-700 disabled:to-gray-600 text-black font-bold px-8 py-3 rounded-lg transition-all transform hover:scale-105 disabled:transform-none disabled:cursor-not-allowed"
+                    className="bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-400 text-white font-bold px-8 py-3 rounded-lg transition-all transform hover:scale-105 disabled:transform-none disabled:cursor-not-allowed shadow-md"
                   >
                     {loading ? '検索中...' : '検索'}
                   </button>
@@ -285,7 +285,7 @@ export default function Home() {
                     <button
                       key={kw}
                       onClick={() => setKeyword(kw)}
-                      className="text-xs bg-yellow-900/30 hover:bg-yellow-900/50 text-yellow-400 px-3 py-1 rounded-full border border-yellow-700/50 transition-colors"
+                      className="text-xs bg-indigo-50 hover:bg-indigo-100 text-indigo-700 px-3 py-1 rounded-full border border-indigo-200 transition-colors"
                     >
                       {kw}
                     </button>
@@ -295,30 +295,30 @@ export default function Home() {
 
               {/* エラー表示 */}
               {error && (
-                <div className="mt-4 bg-red-900/30 border border-red-700/50 rounded-lg p-4">
-                  <p className="text-red-400 text-sm">{error}</p>
+                <div className="mt-4 bg-red-50 border border-red-200 rounded-lg p-4">
+                  <p className="text-red-700 text-sm">{error}</p>
                 </div>
               )}
 
               {/* 情報メッセージ */}
               {infoMessage && (
-                <div className="mt-4 bg-blue-900/30 border border-blue-700/50 rounded-lg p-4">
-                  <p className="text-blue-400 text-sm">{infoMessage}</p>
+                <div className="mt-4 bg-blue-50 border border-blue-200 rounded-lg p-4">
+                  <p className="text-blue-700 text-sm">{infoMessage}</p>
                 </div>
               )}
             </div>
 
             {/* 検索結果 */}
             {searchResults.length > 0 && !selectedProduct && (
-              <div className="bg-gradient-to-br from-gray-900 to-black border border-yellow-700/30 rounded-2xl p-8 mb-8">
+              <div className="bg-white border border-indigo-200 rounded-2xl p-8 mb-8 shadow-lg">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-xl font-serif text-yellow-500">検索結果</h3>
+                  <h3 className="text-xl font-serif text-gray-800">検索結果</h3>
                   {searchSource && (
                     <span className={`text-xs px-3 py-1 rounded-full font-serif ${
-                      searchSource === 'rakuten' ? 'bg-red-900/30 text-red-400 border border-red-700/50' :
-                      searchSource === 'amazon' ? 'bg-orange-900/30 text-orange-400 border border-orange-700/50' :
-                      searchSource === 'yahoo' ? 'bg-purple-900/30 text-purple-400 border border-purple-700/50' :
-                      'bg-gray-700/30 text-gray-400 border border-gray-600/50'
+                      searchSource === 'rakuten' ? 'bg-red-50 text-red-700 border border-red-200' :
+                      searchSource === 'amazon' ? 'bg-orange-50 text-orange-700 border border-orange-200' :
+                      searchSource === 'yahoo' ? 'bg-purple-50 text-purple-700 border border-purple-200' :
+                      'bg-gray-50 text-gray-700 border border-gray-200'
                     }`}>
                       {searchSource === 'rakuten' ? '楽天市場' :
                        searchSource === 'amazon' ? 'Amazon.co.jp' :
@@ -332,17 +332,17 @@ export default function Home() {
                     <button
                       key={product.id}
                       onClick={() => handleSelectProduct(product)}
-                      className="w-full bg-black/50 hover:bg-yellow-900/20 border border-yellow-700/30 hover:border-yellow-500 rounded-lg p-4 transition-all text-left group"
+                      className="w-full bg-gray-50 hover:bg-indigo-50 border border-gray-200 hover:border-indigo-300 rounded-lg p-4 transition-all text-left group"
                     >
                       <div className="flex justify-between items-start">
                         <div className="flex-1">
-                          <h4 className="text-white font-serif mb-1 group-hover:text-yellow-400 transition-colors">
+                          <h4 className="text-gray-900 font-serif mb-1 group-hover:text-indigo-700 transition-colors">
                             {product.name}
                           </h4>
-                          <p className="text-gray-500 text-sm">{product.shopName}</p>
+                          <p className="text-gray-600 text-sm">{product.shopName}</p>
                         </div>
                         <div className="text-right">
-                          <p className="text-yellow-500 font-bold text-xl">
+                          <p className="text-indigo-600 font-bold text-xl">
                             ¥{product.price.toLocaleString()}
                           </p>
                           <p className="text-gray-500 text-xs">新品</p>
@@ -358,16 +358,16 @@ export default function Home() {
 
         {/* 手動入力モード */}
         {searchMode === 'manual' && !result && (
-          <div className="bg-gradient-to-br from-gray-900 to-black border-2 border-yellow-700/50 rounded-2xl p-8 shadow-2xl mb-8">
+          <div className="bg-white border border-indigo-200 rounded-2xl p-8 shadow-lg mb-8">
             <div className="flex items-center gap-2 mb-6">
-              <PenLine className="w-5 h-5 text-yellow-500" />
-              <h3 className="text-xl font-serif text-yellow-500">商品情報を入力</h3>
+              <PenLine className="w-5 h-5 text-indigo-600" />
+              <h3 className="text-xl font-serif text-gray-800">商品情報を入力</h3>
             </div>
 
             <div className="space-y-6">
               {/* 商品名 */}
               <div>
-                <label className="block text-yellow-400 mb-2 text-sm font-serif">
+                <label className="block text-gray-700 mb-2 text-sm font-serif">
                   商品名
                 </label>
                 <input
@@ -375,13 +375,13 @@ export default function Home() {
                   value={manualProductName}
                   onChange={(e) => setManualProductName(e.target.value)}
                   placeholder="例: ニコン Z9 ボディ"
-                  className="w-full bg-black/50 border border-yellow-700/50 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-yellow-500 focus:ring-1 focus:ring-yellow-500"
+                  className="w-full bg-gray-50 border border-gray-300 rounded-lg px-4 py-3 text-gray-900 placeholder-gray-500 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
                 />
               </div>
 
               {/* 新品価格 */}
               <div>
-                <label className="block text-yellow-400 mb-2 text-sm font-serif">
+                <label className="block text-gray-700 mb-2 text-sm font-serif">
                   新品価格（円）
                 </label>
                 <input
@@ -389,13 +389,13 @@ export default function Home() {
                   value={manualNewPrice}
                   onChange={(e) => setManualNewPrice(e.target.value)}
                   placeholder="例: 698000"
-                  className="w-full bg-black/50 border border-yellow-700/50 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-yellow-500 focus:ring-1 focus:ring-yellow-500"
+                  className="w-full bg-gray-50 border border-gray-300 rounded-lg px-4 py-3 text-gray-900 placeholder-gray-500 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
                 />
               </div>
 
               {/* 推定リセール価格 */}
               <div>
-                <label className="block text-yellow-400 mb-2 text-sm font-serif">
+                <label className="block text-gray-700 mb-2 text-sm font-serif">
                   推定リセール価格（円）
                 </label>
                 <input
@@ -403,16 +403,16 @@ export default function Home() {
                   value={manualUsedPrice}
                   onChange={(e) => setManualUsedPrice(e.target.value)}
                   placeholder="例: 595000"
-                  className="w-full bg-black/50 border border-yellow-700/50 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-yellow-500 focus:ring-1 focus:ring-yellow-500"
+                  className="w-full bg-gray-50 border border-gray-300 rounded-lg px-4 py-3 text-gray-900 placeholder-gray-500 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
                 />
-                <p className="text-gray-500 text-xs mt-2">
+                <p className="text-gray-600 text-xs mt-2">
                   ※ ヤフオクやメルカリなどで同じ商品の中古相場を調べて入力してください
                 </p>
               </div>
 
               {/* 使用年数 */}
               <div>
-                <label className="block text-yellow-400 mb-2 text-sm font-serif">
+                <label className="block text-gray-700 mb-2 text-sm font-serif">
                   使用予定年数
                 </label>
                 <input
@@ -421,11 +421,11 @@ export default function Home() {
                   max="30"
                   value={yearsOfUse}
                   onChange={(e) => setYearsOfUse(Number(e.target.value))}
-                  className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-yellow-500"
+                  className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-indigo-600"
                 />
-                <div className="flex justify-between text-sm text-gray-500 mt-1">
+                <div className="flex justify-between text-sm text-gray-600 mt-1">
                   <span>1年</span>
-                  <span className="text-yellow-500 font-bold text-lg">{yearsOfUse}年</span>
+                  <span className="text-indigo-600 font-bold text-lg">{yearsOfUse}年</span>
                   <span>30年</span>
                 </div>
               </div>
@@ -434,15 +434,15 @@ export default function Home() {
               <button
                 onClick={handleManualCalculate}
                 disabled={loading}
-                className="w-full bg-gradient-to-r from-yellow-600 to-yellow-500 hover:from-yellow-700 hover:to-yellow-600 disabled:from-gray-700 disabled:to-gray-600 text-black font-bold py-4 rounded-lg transition-all transform hover:scale-105 disabled:transform-none disabled:cursor-not-allowed font-serif text-lg"
+                className="w-full bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-400 text-white font-bold py-4 rounded-lg transition-all transform hover:scale-105 disabled:transform-none disabled:cursor-not-allowed font-serif text-lg shadow-md"
               >
                 {loading ? '計算中...' : '実質タダを計算する'}
               </button>
 
               {/* エラー表示 */}
               {error && (
-                <div className="bg-red-900/30 border border-red-700/50 rounded-lg p-4">
-                  <p className="text-red-400 text-sm">{error}</p>
+                <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                  <p className="text-red-700 text-sm">{error}</p>
                 </div>
               )}
             </div>
@@ -451,14 +451,14 @@ export default function Home() {
 
         {/* 使用年数設定（検索モードで商品選択後） */}
         {searchMode === 'search' && selectedProduct && !result && (
-          <div className="bg-gradient-to-br from-gray-900 to-black border border-yellow-700/30 rounded-2xl p-8 mb-8">
+          <div className="bg-white border border-indigo-200 rounded-2xl p-8 mb-8 shadow-lg">
             <div className="flex items-center gap-2 mb-4">
-              <Calculator className="w-5 h-5 text-yellow-500" />
-              <h3 className="text-xl font-serif text-yellow-500">使用期間を設定</h3>
+              <Calculator className="w-5 h-5 text-indigo-600" />
+              <h3 className="text-xl font-serif text-gray-800">使用期間を設定</h3>
             </div>
             <div className="space-y-4">
               <div>
-                <label className="block text-gray-400 mb-2 text-sm">
+                <label className="block text-gray-700 mb-2 text-sm">
                   何年使用する予定ですか？
                 </label>
                 <input
@@ -467,11 +467,11 @@ export default function Home() {
                   max="30"
                   value={yearsOfUse}
                   onChange={(e) => setYearsOfUse(Number(e.target.value))}
-                  className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-yellow-500"
+                  className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-indigo-600"
                 />
-                <div className="flex justify-between text-sm text-gray-500 mt-1">
+                <div className="flex justify-between text-sm text-gray-600 mt-1">
                   <span>1年</span>
-                  <span className="text-yellow-500 font-bold text-lg">{yearsOfUse}年</span>
+                  <span className="text-indigo-600 font-bold text-lg">{yearsOfUse}年</span>
                   <span>30年</span>
                 </div>
               </div>
@@ -482,8 +482,8 @@ export default function Home() {
         {/* ローディング */}
         {loading && (searchMode === 'search' ? selectedProduct : true) && (
           <div className="text-center py-12">
-            <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-yellow-500 border-t-transparent"></div>
-            <p className="text-yellow-500 mt-4 font-serif">計算中...</p>
+            <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-indigo-600 border-t-transparent"></div>
+            <p className="text-indigo-600 mt-4 font-serif">計算中...</p>
           </div>
         )}
 
@@ -509,7 +509,7 @@ export default function Home() {
                 setManualNewPrice('');
                 setManualUsedPrice('');
               }}
-              className="bg-gray-800 hover:bg-gray-700 text-yellow-500 font-serif px-8 py-3 rounded-lg border border-yellow-700/50 transition-all"
+              className="bg-white hover:bg-gray-50 text-indigo-600 font-serif px-8 py-3 rounded-lg border-2 border-indigo-300 hover:border-indigo-400 transition-all shadow-md"
             >
               別の商品で計算する
             </button>
@@ -518,13 +518,13 @@ export default function Home() {
       </main>
 
       {/* フッター */}
-      <footer className="border-t border-yellow-700/30 bg-black/50 mt-16">
+      <footer className="border-t border-indigo-200 bg-white/80 mt-16">
         <div className="container mx-auto px-4 py-8 text-center">
-          <p className="text-gray-500 text-sm font-serif">
+          <p className="text-gray-600 text-sm font-serif">
             ※本アプリはプロトタイプです。リセールバリューは推定値であり、実際の売却価格を保証するものではありません。
           </p>
-          <p className="text-gray-600 text-xs mt-2">
-            Powered by Next.js | Designed with Nagoya Rich Vibes
+          <p className="text-gray-500 text-xs mt-2">
+            Powered by Next.js | 賢い買い物を可視化
           </p>
         </div>
       </footer>

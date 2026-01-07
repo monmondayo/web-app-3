@@ -21,18 +21,20 @@ export default function ResultCard({ result, analysis, productName }: ResultCard
 
     try {
       const canvas = await html2canvas(resultRef.current, {
-        backgroundColor: '#000000',
+        backgroundColor: '#ffffff',
         scale: 2,
-        logging: false
+        logging: false,
+        useCORS: true,
+        allowTaint: false
       });
 
       const link = document.createElement('a');
       link.download = `実質タダ電卓_${productName}.png`;
-      link.href = canvas.toDataURL();
+      link.href = canvas.toDataURL('image/png');
       link.click();
     } catch (error) {
       console.error('画像生成エラー:', error);
-      alert('画像の生成に失敗しました');
+      alert('画像の生成に失敗しました。もう一度お試しください。');
     }
   };
 
@@ -55,37 +57,37 @@ export default function ResultCard({ result, analysis, productName }: ResultCard
       {/* ダウンロード可能な結果カード */}
       <div
         ref={resultRef}
-        className="bg-gradient-to-br from-black via-gray-900 to-black border-2 border-yellow-600 rounded-2xl p-8 shadow-2xl"
+        className="bg-gradient-to-br from-white to-indigo-50 border-2 border-indigo-300 rounded-2xl p-8 shadow-2xl"
       >
         {/* ヘッダー */}
         <div className="text-center mb-8">
           <div className="flex items-center justify-center gap-2 mb-2">
-            <Sparkles className="w-6 h-6 text-yellow-500" />
-            <h2 className="text-3xl font-serif text-yellow-500 tracking-wider">
+            <Sparkles className="w-6 h-6 text-indigo-600" />
+            <h2 className="text-3xl font-serif text-indigo-900 tracking-wide">
               実質タダ電卓 Pro
             </h2>
-            <Sparkles className="w-6 h-6 text-yellow-500" />
+            <Sparkles className="w-6 h-6 text-indigo-600" />
           </div>
-          <p className="text-sm text-yellow-600 font-serif">Nagoya Vibe Edition</p>
+          <p className="text-sm text-indigo-600 font-serif">リセールバリュー分析</p>
         </div>
 
         {/* 商品名 */}
         <div className="mb-6 text-center">
-          <p className="text-white text-lg font-serif">{productName}</p>
+          <p className="text-gray-800 text-lg font-serif">{productName}</p>
         </div>
 
         {/* メイン結果 */}
-        <div className="bg-gradient-to-r from-yellow-900/30 to-yellow-800/30 border border-yellow-600 rounded-xl p-6 mb-6">
+        <div className="bg-gradient-to-r from-indigo-600 to-indigo-700 border border-indigo-500 rounded-xl p-6 mb-6 shadow-lg">
           <div className="text-center mb-4">
-            <p className="text-yellow-400 text-sm mb-2 font-serif">1日あたりのコスト</p>
+            <p className="text-indigo-200 text-sm mb-2 font-serif">1日あたりのコスト</p>
             <p className="text-white text-6xl font-bold mb-2">
               ¥{result.dailyCost.toLocaleString()}
             </p>
-            <p className="text-yellow-300 text-2xl font-serif">{result.comparison}</p>
+            <p className="text-indigo-100 text-2xl font-serif">{result.comparison}</p>
           </div>
 
-          <div className="border-t border-yellow-700 pt-4 mt-4">
-            <p className="text-yellow-200 text-center text-lg font-serif">
+          <div className="border-t border-indigo-400 pt-4 mt-4">
+            <p className="text-white text-center text-lg font-serif">
               {result.savingsMessage}
             </p>
           </div>
@@ -93,25 +95,25 @@ export default function ResultCard({ result, analysis, productName }: ResultCard
 
         {/* 詳細情報 */}
         <div className="grid grid-cols-2 gap-4 mb-6">
-          <div className="bg-black/40 border border-yellow-700/50 rounded-lg p-4">
-            <p className="text-yellow-600 text-xs mb-1 font-serif">購入価格</p>
-            <p className="text-white text-xl font-bold">
+          <div className="bg-white border border-indigo-200 rounded-lg p-4 shadow">
+            <p className="text-indigo-600 text-xs mb-1 font-serif">購入価格</p>
+            <p className="text-gray-900 text-xl font-bold">
               ¥{result.itemPrice.toLocaleString()}
             </p>
           </div>
-          <div className="bg-black/40 border border-yellow-700/50 rounded-lg p-4">
-            <p className="text-yellow-600 text-xs mb-1 font-serif">推定リセール</p>
-            <p className="text-white text-xl font-bold">
+          <div className="bg-white border border-indigo-200 rounded-lg p-4 shadow">
+            <p className="text-indigo-600 text-xs mb-1 font-serif">推定リセール</p>
+            <p className="text-gray-900 text-xl font-bold">
               ¥{result.estimatedResaleValue.toLocaleString()}
             </p>
           </div>
-          <div className="bg-black/40 border border-yellow-700/50 rounded-lg p-4">
-            <p className="text-yellow-600 text-xs mb-1 font-serif">使用期間</p>
-            <p className="text-white text-xl font-bold">{result.yearsOfUse}年</p>
+          <div className="bg-white border border-indigo-200 rounded-lg p-4 shadow">
+            <p className="text-indigo-600 text-xs mb-1 font-serif">使用期間</p>
+            <p className="text-gray-900 text-xl font-bold">{result.yearsOfUse}年</p>
           </div>
-          <div className="bg-black/40 border border-yellow-700/50 rounded-lg p-4">
-            <p className="text-yellow-600 text-xs mb-1 font-serif">実質コスト</p>
-            <p className="text-white text-xl font-bold">
+          <div className="bg-white border border-indigo-200 rounded-lg p-4 shadow">
+            <p className="text-indigo-600 text-xs mb-1 font-serif">実質コスト</p>
+            <p className="text-gray-900 text-xl font-bold">
               ¥{(result.itemPrice - result.estimatedResaleValue).toLocaleString()}
             </p>
           </div>
@@ -119,7 +121,7 @@ export default function ResultCard({ result, analysis, productName }: ResultCard
 
         {/* フッター */}
         <div className="text-center">
-          <p className="text-yellow-700 text-xs font-serif">
+          <p className="text-gray-600 text-xs font-serif">
             ※中古相場データ {analysis.dataPoints}件 を分析 |
             相場の安定性: <span className={volatilityColor[analysis.volatility]}>
               {volatilityLabel[analysis.volatility]}
@@ -132,7 +134,7 @@ export default function ResultCard({ result, analysis, productName }: ResultCard
       <div className="flex gap-4">
         <button
           onClick={handleDownload}
-          className="flex-1 bg-gradient-to-r from-yellow-600 to-yellow-500 hover:from-yellow-700 hover:to-yellow-600 text-black font-bold py-4 px-6 rounded-xl transition-all transform hover:scale-105 flex items-center justify-center gap-2 shadow-lg"
+          className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 px-6 rounded-xl transition-all transform hover:scale-105 flex items-center justify-center gap-2 shadow-lg"
         >
           <Download className="w-5 h-5" />
           インスタに投稿する画像をダウンロード
@@ -140,34 +142,39 @@ export default function ResultCard({ result, analysis, productName }: ResultCard
       </div>
 
       {/* 価格分布グラフ */}
-      <div className="bg-gradient-to-br from-gray-900 to-black border border-yellow-700/30 rounded-2xl p-6">
-        <h3 className="text-yellow-500 text-xl font-serif mb-4 flex items-center gap-2">
-          <TrendingUp className="w-5 h-5" />
+      <div className="bg-white border border-indigo-200 rounded-2xl p-6 shadow-lg">
+        <h3 className="text-gray-800 text-xl font-serif mb-4 flex items-center gap-2">
+          <TrendingUp className="w-5 h-5 text-indigo-600" />
           中古相場の価格分布
         </h3>
         <div className="h-64">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={distributionData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#444" />
+              <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
               <XAxis
                 dataKey="range"
-                stroke="#ca8a04"
+                stroke="#6366f1"
                 style={{ fontSize: '12px' }}
+                label={{ value: '価格帯', position: 'insideBottom', offset: -5 }}
               />
-              <YAxis stroke="#ca8a04" style={{ fontSize: '12px' }} />
+              <YAxis
+                stroke="#6366f1"
+                style={{ fontSize: '12px' }}
+                label={{ value: '件数', angle: -90, position: 'insideLeft' }}
+              />
               <Tooltip
                 contentStyle={{
-                  backgroundColor: '#1a1a1a',
-                  border: '1px solid #ca8a04',
+                  backgroundColor: '#ffffff',
+                  border: '1px solid #c7d2fe',
                   borderRadius: '8px',
-                  color: '#fff'
+                  color: '#1f2937'
                 }}
               />
-              <Bar dataKey="count" fill="#ca8a04" radius={[8, 8, 0, 0]} />
+              <Bar dataKey="count" fill="#6366f1" radius={[8, 8, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </div>
-        <div className="mt-4 text-sm text-gray-400 space-y-1">
+        <div className="mt-4 text-sm text-gray-700 space-y-1">
           <p>• データ件数: {analysis.dataPoints}件（外れ値除外済み）</p>
           <p>• 推定リセール: ¥{analysis.estimatedResaleValue.toLocaleString()}（中央値）</p>
           <p>• 標準偏差: ¥{analysis.standardDeviation.toLocaleString()}</p>
