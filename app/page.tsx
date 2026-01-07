@@ -1,12 +1,15 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Search, Sparkles, Calculator, Crown } from 'lucide-react';
+import { Search, Sparkles, Calculator, Crown, PenLine, List } from 'lucide-react';
 import { Product, ResaleAnalysis, JissitsuTadaResult } from '@/lib/types';
-import { calculateJissitsuTada } from '@/lib/resaleCalculator';
+import { calculateJissitsuTada, calculateResaleValue } from '@/lib/resaleCalculator';
 import ResultCard from '@/components/ResultCard';
 
+type SearchMode = 'search' | 'manual';
+
 export default function Home() {
+  const [searchMode, setSearchMode] = useState<SearchMode>('search');
   const [keyword, setKeyword] = useState('');
   const [loading, setLoading] = useState(false);
   const [searchResults, setSearchResults] = useState<Product[]>([]);
@@ -17,6 +20,11 @@ export default function Home() {
     analysis: ResaleAnalysis;
   } | null>(null);
   const [error, setError] = useState<string>('');
+
+  // 手動入力用のstate
+  const [manualProductName, setManualProductName] = useState('');
+  const [manualNewPrice, setManualNewPrice] = useState('');
+  const [manualUsedPrice, setManualUsedPrice] = useState('');
 
   const handleSearch = async () => {
     if (!keyword.trim()) {
@@ -83,6 +91,70 @@ export default function Home() {
     }
   };
 
+  const handleManualCalculate = () => {
+    // バリデーション
+    if (!manualProductName.trim()) {
+      setError('商品名を入力してください');
+      return;
+    }
+    if (!manualNewPrice || parseFloat(manualNewPrice) <= 0) {
+      setError('有効な新品価格を入力してください');
+      return;
+    }
+    if (!manualUsedPrice || parseFloat(manualUsedPrice) <= 0) {
+      setError('有効な推定リセール価格を入力してください');
+      return;
+    }
+
+    setLoading(true);
+    setError('');
+    setResult(null);
+
+    try {
+      const newPrice = parseFloat(manualNewPrice);
+      const usedPrice = parseFloat(manualUsedPrice);
+
+      // 簡易的な中古相場データを生成（±5%のバラつき）
+      const mockUsedPrices = Array.from({ length: 24 }, (_, i) => {
+        const variance = (Math.random() - 0.5) * 0.1; // -5% ~ +5%
+        return Math.round(usedPrice * (1 + variance));
+      });
+
+      // 外れ値を追加
+      mockUsedPrices.push(Math.round(usedPrice * 0.7)); // 低い外れ値
+      mockUsedPrices.push(Math.round(usedPrice * 1.3)); // 高い外れ値
+
+      // リセールバリューを計算
+      const analysis = calculateResaleValue(mockUsedPrices);
+
+      // 実質タダを計算
+      const calculation = calculateJissitsuTada(
+        newPrice,
+        analysis.estimatedResaleValue,
+        yearsOfUse
+      );
+
+      // 疑似商品オブジェクトを作成
+      setSelectedProduct({
+        id: 'manual',
+        name: manualProductName,
+        price: newPrice,
+        imageUrl: '',
+        shopName: '手動入力',
+        condition: 'new'
+      });
+
+      setResult({
+        calculation,
+        analysis
+      });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '計算中にエラーが発生しました');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
       handleSearch();
@@ -135,88 +207,213 @@ export default function Home() {
           </div>
         )}
 
-        {/* 検索セクション */}
-        <div className="bg-gradient-to-br from-gray-900 to-black border-2 border-yellow-700/50 rounded-2xl p-8 shadow-2xl mb-8">
-          <div className="flex items-center gap-2 mb-4">
-            <Search className="w-5 h-5 text-yellow-500" />
-            <h3 className="text-xl font-serif text-yellow-500">商品を検索</h3>
+        {/* モード切り替えタブ */}
+        {!result && (
+          <div className="flex gap-2 mb-6 justify-center">
+            <button
+              onClick={() => setSearchMode('search')}
+              className={`flex items-center gap-2 px-6 py-3 rounded-lg font-serif transition-all ${
+                searchMode === 'search'
+                  ? 'bg-yellow-600 text-black'
+                  : 'bg-gray-800 text-yellow-500 hover:bg-gray-700'
+              }`}
+            >
+              <List className="w-4 h-4" />
+              商品を検索
+            </button>
+            <button
+              onClick={() => setSearchMode('manual')}
+              className={`flex items-center gap-2 px-6 py-3 rounded-lg font-serif transition-all ${
+                searchMode === 'manual'
+                  ? 'bg-yellow-600 text-black'
+                  : 'bg-gray-800 text-yellow-500 hover:bg-gray-700'
+              }`}
+            >
+              <PenLine className="w-4 h-4" />
+              手動で入力
+            </button>
           </div>
+        )}
 
-          <div className="space-y-4">
-            <div className="flex gap-3">
-              <input
-                type="text"
-                value={keyword}
-                onChange={(e) => setKeyword(e.target.value)}
-                onKeyPress={handleKeyPress}
-                placeholder="例: ロレックス サブマリーナ"
-                className="flex-1 bg-black/50 border border-yellow-700/50 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-yellow-500 focus:ring-1 focus:ring-yellow-500"
-              />
+        {/* 検索モード */}
+        {searchMode === 'search' && !result && (
+          <>
+            <div className="bg-gradient-to-br from-gray-900 to-black border-2 border-yellow-700/50 rounded-2xl p-8 shadow-2xl mb-8">
+              <div className="flex items-center gap-2 mb-4">
+                <Search className="w-5 h-5 text-yellow-500" />
+                <h3 className="text-xl font-serif text-yellow-500">商品を検索</h3>
+              </div>
+
+              <div className="space-y-4">
+                <div className="flex gap-3">
+                  <input
+                    type="text"
+                    value={keyword}
+                    onChange={(e) => setKeyword(e.target.value)}
+                    onKeyPress={handleKeyPress}
+                    placeholder="例: ロレックス サブマリーナ"
+                    className="flex-1 bg-black/50 border border-yellow-700/50 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-yellow-500 focus:ring-1 focus:ring-yellow-500"
+                  />
+                  <button
+                    onClick={handleSearch}
+                    disabled={loading}
+                    className="bg-gradient-to-r from-yellow-600 to-yellow-500 hover:from-yellow-700 hover:to-yellow-600 disabled:from-gray-700 disabled:to-gray-600 text-black font-bold px-8 py-3 rounded-lg transition-all transform hover:scale-105 disabled:transform-none disabled:cursor-not-allowed"
+                  >
+                    {loading ? '検索中...' : '検索'}
+                  </button>
+                </div>
+
+                {/* 例示キーワード */}
+                <div className="flex flex-wrap gap-2">
+                  <span className="text-gray-500 text-sm">試してみる:</span>
+                  {exampleKeywords.map((kw) => (
+                    <button
+                      key={kw}
+                      onClick={() => setKeyword(kw)}
+                      className="text-xs bg-yellow-900/30 hover:bg-yellow-900/50 text-yellow-400 px-3 py-1 rounded-full border border-yellow-700/50 transition-colors"
+                    >
+                      {kw}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* エラー表示 */}
+              {error && (
+                <div className="mt-4 bg-red-900/30 border border-red-700/50 rounded-lg p-4">
+                  <p className="text-red-400 text-sm">{error}</p>
+                </div>
+              )}
+            </div>
+
+            {/* 検索結果 */}
+            {searchResults.length > 0 && !selectedProduct && (
+              <div className="bg-gradient-to-br from-gray-900 to-black border border-yellow-700/30 rounded-2xl p-8 mb-8">
+                <h3 className="text-xl font-serif text-yellow-500 mb-4">検索結果</h3>
+                <div className="space-y-3">
+                  {searchResults.map((product) => (
+                    <button
+                      key={product.id}
+                      onClick={() => handleSelectProduct(product)}
+                      className="w-full bg-black/50 hover:bg-yellow-900/20 border border-yellow-700/30 hover:border-yellow-500 rounded-lg p-4 transition-all text-left group"
+                    >
+                      <div className="flex justify-between items-start">
+                        <div className="flex-1">
+                          <h4 className="text-white font-serif mb-1 group-hover:text-yellow-400 transition-colors">
+                            {product.name}
+                          </h4>
+                          <p className="text-gray-500 text-sm">{product.shopName}</p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-yellow-500 font-bold text-xl">
+                            ¥{product.price.toLocaleString()}
+                          </p>
+                          <p className="text-gray-500 text-xs">新品</p>
+                        </div>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </>
+        )}
+
+        {/* 手動入力モード */}
+        {searchMode === 'manual' && !result && (
+          <div className="bg-gradient-to-br from-gray-900 to-black border-2 border-yellow-700/50 rounded-2xl p-8 shadow-2xl mb-8">
+            <div className="flex items-center gap-2 mb-6">
+              <PenLine className="w-5 h-5 text-yellow-500" />
+              <h3 className="text-xl font-serif text-yellow-500">商品情報を入力</h3>
+            </div>
+
+            <div className="space-y-6">
+              {/* 商品名 */}
+              <div>
+                <label className="block text-yellow-400 mb-2 text-sm font-serif">
+                  商品名
+                </label>
+                <input
+                  type="text"
+                  value={manualProductName}
+                  onChange={(e) => setManualProductName(e.target.value)}
+                  placeholder="例: ニコン Z9 ボディ"
+                  className="w-full bg-black/50 border border-yellow-700/50 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-yellow-500 focus:ring-1 focus:ring-yellow-500"
+                />
+              </div>
+
+              {/* 新品価格 */}
+              <div>
+                <label className="block text-yellow-400 mb-2 text-sm font-serif">
+                  新品価格（円）
+                </label>
+                <input
+                  type="number"
+                  value={manualNewPrice}
+                  onChange={(e) => setManualNewPrice(e.target.value)}
+                  placeholder="例: 698000"
+                  className="w-full bg-black/50 border border-yellow-700/50 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-yellow-500 focus:ring-1 focus:ring-yellow-500"
+                />
+              </div>
+
+              {/* 推定リセール価格 */}
+              <div>
+                <label className="block text-yellow-400 mb-2 text-sm font-serif">
+                  推定リセール価格（円）
+                </label>
+                <input
+                  type="number"
+                  value={manualUsedPrice}
+                  onChange={(e) => setManualUsedPrice(e.target.value)}
+                  placeholder="例: 595000"
+                  className="w-full bg-black/50 border border-yellow-700/50 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-yellow-500 focus:ring-1 focus:ring-yellow-500"
+                />
+                <p className="text-gray-500 text-xs mt-2">
+                  ※ ヤフオクやメルカリなどで同じ商品の中古相場を調べて入力してください
+                </p>
+              </div>
+
+              {/* 使用年数 */}
+              <div>
+                <label className="block text-yellow-400 mb-2 text-sm font-serif">
+                  使用予定年数
+                </label>
+                <input
+                  type="range"
+                  min="1"
+                  max="30"
+                  value={yearsOfUse}
+                  onChange={(e) => setYearsOfUse(Number(e.target.value))}
+                  className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-yellow-500"
+                />
+                <div className="flex justify-between text-sm text-gray-500 mt-1">
+                  <span>1年</span>
+                  <span className="text-yellow-500 font-bold text-lg">{yearsOfUse}年</span>
+                  <span>30年</span>
+                </div>
+              </div>
+
+              {/* 計算ボタン */}
               <button
-                onClick={handleSearch}
+                onClick={handleManualCalculate}
                 disabled={loading}
-                className="bg-gradient-to-r from-yellow-600 to-yellow-500 hover:from-yellow-700 hover:to-yellow-600 disabled:from-gray-700 disabled:to-gray-600 text-black font-bold px-8 py-3 rounded-lg transition-all transform hover:scale-105 disabled:transform-none disabled:cursor-not-allowed"
+                className="w-full bg-gradient-to-r from-yellow-600 to-yellow-500 hover:from-yellow-700 hover:to-yellow-600 disabled:from-gray-700 disabled:to-gray-600 text-black font-bold py-4 rounded-lg transition-all transform hover:scale-105 disabled:transform-none disabled:cursor-not-allowed font-serif text-lg"
               >
-                {loading ? '検索中...' : '検索'}
+                {loading ? '計算中...' : '実質タダを計算する'}
               </button>
-            </div>
 
-            {/* 例示キーワード */}
-            <div className="flex flex-wrap gap-2">
-              <span className="text-gray-500 text-sm">試してみる:</span>
-              {exampleKeywords.map((kw) => (
-                <button
-                  key={kw}
-                  onClick={() => setKeyword(kw)}
-                  className="text-xs bg-yellow-900/30 hover:bg-yellow-900/50 text-yellow-400 px-3 py-1 rounded-full border border-yellow-700/50 transition-colors"
-                >
-                  {kw}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* エラー表示 */}
-          {error && (
-            <div className="mt-4 bg-red-900/30 border border-red-700/50 rounded-lg p-4">
-              <p className="text-red-400 text-sm">{error}</p>
-            </div>
-          )}
-        </div>
-
-        {/* 検索結果 */}
-        {searchResults.length > 0 && !selectedProduct && (
-          <div className="bg-gradient-to-br from-gray-900 to-black border border-yellow-700/30 rounded-2xl p-8 mb-8">
-            <h3 className="text-xl font-serif text-yellow-500 mb-4">検索結果</h3>
-            <div className="space-y-3">
-              {searchResults.map((product) => (
-                <button
-                  key={product.id}
-                  onClick={() => handleSelectProduct(product)}
-                  className="w-full bg-black/50 hover:bg-yellow-900/20 border border-yellow-700/30 hover:border-yellow-500 rounded-lg p-4 transition-all text-left group"
-                >
-                  <div className="flex justify-between items-start">
-                    <div className="flex-1">
-                      <h4 className="text-white font-serif mb-1 group-hover:text-yellow-400 transition-colors">
-                        {product.name}
-                      </h4>
-                      <p className="text-gray-500 text-sm">{product.shopName}</p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-yellow-500 font-bold text-xl">
-                        ¥{product.price.toLocaleString()}
-                      </p>
-                      <p className="text-gray-500 text-xs">新品</p>
-                    </div>
-                  </div>
-                </button>
-              ))}
+              {/* エラー表示 */}
+              {error && (
+                <div className="bg-red-900/30 border border-red-700/50 rounded-lg p-4">
+                  <p className="text-red-400 text-sm">{error}</p>
+                </div>
+              )}
             </div>
           </div>
         )}
 
-        {/* 使用年数設定 */}
-        {selectedProduct && !result && (
+        {/* 使用年数設定（検索モードで商品選択後） */}
+        {searchMode === 'search' && selectedProduct && !result && (
           <div className="bg-gradient-to-br from-gray-900 to-black border border-yellow-700/30 rounded-2xl p-8 mb-8">
             <div className="flex items-center gap-2 mb-4">
               <Calculator className="w-5 h-5 text-yellow-500" />
@@ -246,7 +443,7 @@ export default function Home() {
         )}
 
         {/* ローディング */}
-        {loading && selectedProduct && (
+        {loading && (searchMode === 'search' ? selectedProduct : true) && (
           <div className="text-center py-12">
             <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-yellow-500 border-t-transparent"></div>
             <p className="text-yellow-500 mt-4 font-serif">計算中...</p>
@@ -271,6 +468,9 @@ export default function Home() {
                 setSelectedProduct(null);
                 setSearchResults([]);
                 setKeyword('');
+                setManualProductName('');
+                setManualNewPrice('');
+                setManualUsedPrice('');
               }}
               className="bg-gray-800 hover:bg-gray-700 text-yellow-500 font-serif px-8 py-3 rounded-lg border border-yellow-700/50 transition-all"
             >
