@@ -92,8 +92,10 @@ export default function Home() {
   const exampleKeywords = [
     'ロレックス サブマリーナ',
     'エルメス バーキン',
+    'ニコン Z9',
     'iPhone 16 Pro Max',
-    'MacBook Pro'
+    'MacBook Pro',
+    'シャネル'
   ];
 
   return (
