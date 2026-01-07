@@ -79,7 +79,7 @@ export default function ResultCard({ result, analysis, productName }: ResultCard
       {/* ダウンロード可能な結果カード */}
       <div
         ref={resultRef}
-        className="bg-gradient-to-br from-white to-indigo-50 border-2 border-indigo-300 rounded-2xl p-8 shadow-2xl"
+        className="bg-white border-2 border-indigo-300 rounded-2xl p-8 shadow-2xl"
       >
         {/* ヘッダー */}
         <div className="text-center mb-8">
@@ -99,7 +99,7 @@ export default function ResultCard({ result, analysis, productName }: ResultCard
         </div>
 
         {/* メイン結果 */}
-        <div className="bg-gradient-to-r from-indigo-600 to-indigo-700 border border-indigo-500 rounded-xl p-6 mb-6 shadow-lg">
+        <div className="bg-indigo-600 border border-indigo-500 rounded-xl p-6 mb-6 shadow-lg">
           <div className="text-center mb-4">
             <p className="text-indigo-200 text-sm mb-2 font-serif">1日あたりのコスト</p>
             <p className="text-white text-6xl font-bold mb-2">
