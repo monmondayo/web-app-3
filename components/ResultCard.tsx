@@ -20,21 +20,43 @@ export default function ResultCard({ result, analysis, productName }: ResultCard
     if (!resultRef.current) return;
 
     try {
+      // Google Fontsの読み込みを待つ
+      await document.fonts.ready;
+
       const canvas = await html2canvas(resultRef.current, {
         backgroundColor: '#ffffff',
         scale: 2,
-        logging: false,
+        logging: true, // デバッグ用にログを有効化
         useCORS: true,
-        allowTaint: false
+        allowTaint: true, // 一時的にtrueに変更
+        foreignObjectRendering: false, // SVGレンダリングを無効化
+        removeContainer: true,
+        imageTimeout: 0,
+        onclone: (clonedDoc) => {
+          // クローンされたドキュメントのスタイルを確認
+          const clonedElement = clonedDoc.querySelector('[data-html2canvas-ignore]');
+          if (clonedElement) {
+            clonedElement.remove();
+          }
+        }
       });
 
+      // Canvasが正常に作成されたか確認
+      if (canvas.width === 0 || canvas.height === 0) {
+        throw new Error('Canvas size is zero');
+      }
+
       const link = document.createElement('a');
-      link.download = `実質タダ電卓_${productName}.png`;
+      link.download = `実質タダ電卓_${productName.replace(/[/\\?%*:|"<>]/g, '_')}.png`;
       link.href = canvas.toDataURL('image/png');
       link.click();
     } catch (error) {
-      console.error('画像生成エラー:', error);
-      alert('画像の生成に失敗しました。もう一度お試しください。');
+      console.error('画像生成エラー詳細:', error);
+      if (error instanceof Error) {
+        alert(`画像の生成に失敗しました: ${error.message}\n\nブラウザのコンソールで詳細をご確認ください。`);
+      } else {
+        alert('画像の生成に失敗しました。もう一度お試しください。');
+      }
     }
   };
 
@@ -62,11 +84,11 @@ export default function ResultCard({ result, analysis, productName }: ResultCard
         {/* ヘッダー */}
         <div className="text-center mb-8">
           <div className="flex items-center justify-center gap-2 mb-2">
-            <Sparkles className="w-6 h-6 text-indigo-600" />
+            <span className="text-indigo-600 text-2xl">✨</span>
             <h2 className="text-3xl font-serif text-indigo-900 tracking-wide">
               実質タダ電卓 Pro
             </h2>
-            <Sparkles className="w-6 h-6 text-indigo-600" />
+            <span className="text-indigo-600 text-2xl">✨</span>
           </div>
           <p className="text-sm text-indigo-600 font-serif">リセールバリュー分析</p>
         </div>
