@@ -309,10 +309,12 @@ export default function Home() {
                   {searchSource && (
                     <span className={`text-xs px-3 py-1 rounded-full font-serif ${
                       searchSource === 'rakuten' ? 'bg-red-900/30 text-red-400 border border-red-700/50' :
+                      searchSource === 'amazon' ? 'bg-orange-900/30 text-orange-400 border border-orange-700/50' :
                       searchSource === 'yahoo' ? 'bg-purple-900/30 text-purple-400 border border-purple-700/50' :
                       'bg-gray-700/30 text-gray-400 border border-gray-600/50'
                     }`}>
                       {searchSource === 'rakuten' ? '楽天市場' :
+                       searchSource === 'amazon' ? 'Amazon.co.jp' :
                        searchSource === 'yahoo' ? 'Yahoo!ショッピング' :
                        'モックデータ'}
                     </span>

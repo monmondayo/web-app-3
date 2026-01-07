@@ -104,7 +104,25 @@ RAKUTEN_APPLICATION_ID=your_rakuten_app_id_here
 npm run dev
 ```
 
-#### 2. Yahoo!ショッピングAPI（オプション）
+#### 2. Amazon Product Advertising API（オプション）
+
+1. [Amazon Product Advertising API](https://affiliate.amazon.co.jp/)にアクセス
+2. Amazonアソシエイト・プログラムに参加（審査が必要）
+3. [PA-API利用申請](https://affiliate.amazon.co.jp/assoc_credentials/home)から認証情報を取得
+4. `.env.local` に追加：
+
+```
+AMAZON_ACCESS_KEY=your_amazon_access_key
+AMAZON_SECRET_KEY=your_amazon_secret_key
+AMAZON_ASSOCIATE_TAG=your_amazon_associate_tag
+```
+
+**注意**: Amazon PA-APIは審査制で、以下の条件が必要です：
+- Amazonアソシエイト・プログラムに登録済みであること
+- 過去180日以内に3件以上の適格販売があること
+- PA-API利用規約に同意すること
+
+#### 3. Yahoo!ショッピングAPI（オプション）
 
 1. [Yahoo!デベロッパーネットワーク](https://e.developer.yahoo.co.jp/)にアクセス
 2. Client IDを取得
@@ -117,10 +135,20 @@ YAHOO_CLIENT_ID=your_yahoo_client_id_here
 ### 検索ソースの優先順位
 
 1. **楽天市場API**（設定されている場合）
-2. **Yahoo!ショッピングAPI**（楽天が失敗した場合）
-3. **モックデータ**（APIが設定されていない場合）
+2. **Amazon PA-API**（楽天が失敗した場合、設定されている場合）
+3. **Yahoo!ショッピングAPI**（楽天とAmazonが失敗した場合）
+4. **モックデータ**（APIが設定されていない場合）
 
-設定後は、検索結果に「楽天市場」「Yahoo!ショッピング」「モックデータ」のバッジが表示されます。
+設定後は、検索結果に「楽天市場」「Amazon.co.jp」「Yahoo!ショッピング」「モックデータ」のバッジが表示されます。
+
+### ビックカメラ・ヨドバシカメラについて
+
+**ビックカメラ**と**ヨドバシカメラ**は公式のAPI提供がないため、現時点では直接検索できません。
+
+**代替案**：
+- 手動入力モードを使用して、各サイトで確認した価格を入力
+- 楽天市場やYahoo!ショッピングに出店している場合は、それらのAPIで検索可能
+- Amazonに出品されている商品も多いため、Amazon PA-APIで検索可能
 
 ## 📊 計算ロジックの詳細
 

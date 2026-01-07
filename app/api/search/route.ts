@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { searchProducts } from '@/lib/mockData';
 import { Product } from '@/lib/types';
+import crypto from 'crypto';
 
 /**
  * 楽天市場APIから商品を検索
@@ -82,6 +83,129 @@ async function searchYahoo(keyword: string): Promise<Product[]> {
 }
 
 /**
+ * Amazon Product Advertising APIから商品を検索
+ * PA-API 5.0を使用（署名バージョン4が必要）
+ */
+async function searchAmazon(keyword: string): Promise<Product[]> {
+  const ACCESS_KEY = process.env.AMAZON_ACCESS_KEY;
+  const SECRET_KEY = process.env.AMAZON_SECRET_KEY;
+  const ASSOCIATE_TAG = process.env.AMAZON_ASSOCIATE_TAG;
+  const REGION = 'us-east-1'; // PA-API endpoint
+  const HOST = 'webservices.amazon.com';
+  const MARKETPLACE = 'www.amazon.co.jp';
+
+  if (!ACCESS_KEY || !SECRET_KEY || !ASSOCIATE_TAG) {
+    throw new Error('Amazon credentials not set');
+  }
+
+  // PA-API 5.0 リクエストペイロード
+  const payload = JSON.stringify({
+    Keywords: keyword,
+    Resources: [
+      'Images.Primary.Large',
+      'ItemInfo.Title',
+      'Offers.Listings.Price'
+    ],
+    SearchIndex: 'All',
+    ItemCount: 10,
+    SortBy: 'Price:HighToLow',
+    PartnerTag: ASSOCIATE_TAG,
+    PartnerType: 'Associates',
+    Marketplace: MARKETPLACE
+  });
+
+  // 署名バージョン4の生成
+  const service = 'ProductAdvertisingAPI';
+  const target = 'com.amazon.paapi5.v1.ProductAdvertisingAPIv1.SearchItems';
+  const now = new Date();
+  const amzDate = now.toISOString().replace(/[:-]|\.\d{3}/g, '');
+  const dateStamp = amzDate.slice(0, 8);
+
+  // リクエストヘッダー
+  const headers: Record<string, string> = {
+    'content-encoding': 'amz-1.0',
+    'content-type': 'application/json; charset=utf-8',
+    'host': HOST,
+    'x-amz-date': amzDate,
+    'x-amz-target': target
+  };
+
+  // 署名計算
+  const canonicalHeaders = Object.keys(headers)
+    .sort()
+    .map(key => `${key}:${headers[key]}\n`)
+    .join('');
+  const signedHeaders = Object.keys(headers).sort().join(';');
+  const payloadHash = crypto.createHash('sha256').update(payload).digest('hex');
+
+  const canonicalRequest = [
+    'POST',
+    '/paapi5/searchitems',
+    '',
+    canonicalHeaders,
+    signedHeaders,
+    payloadHash
+  ].join('\n');
+
+  const credentialScope = `${dateStamp}/${REGION}/${service}/aws4_request`;
+  const stringToSign = [
+    'AWS4-HMAC-SHA256',
+    amzDate,
+    credentialScope,
+    crypto.createHash('sha256').update(canonicalRequest).digest('hex')
+  ].join('\n');
+
+  // 署名キーの生成
+  const getSignatureKey = (key: string, dateStamp: string, regionName: string, serviceName: string) => {
+    const kDate = crypto.createHmac('sha256', `AWS4${key}`).update(dateStamp).digest();
+    const kRegion = crypto.createHmac('sha256', kDate).update(regionName).digest();
+    const kService = crypto.createHmac('sha256', kRegion).update(serviceName).digest();
+    const kSigning = crypto.createHmac('sha256', kService).update('aws4_request').digest();
+    return kSigning;
+  };
+
+  const signingKey = getSignatureKey(SECRET_KEY, dateStamp, REGION, service);
+  const signature = crypto.createHmac('sha256', signingKey).update(stringToSign).digest('hex');
+
+  // Authorization ヘッダー
+  const authorizationHeader = `AWS4-HMAC-SHA256 Credential=${ACCESS_KEY}/${credentialScope}, SignedHeaders=${signedHeaders}, Signature=${signature}`;
+
+  try {
+    const response = await fetch(`https://${HOST}/paapi5/searchitems`, {
+      method: 'POST',
+      headers: {
+        ...headers,
+        'Authorization': authorizationHeader
+      },
+      body: payload
+    });
+
+    if (!response.ok) {
+      throw new Error(`Amazon API error: ${response.status}`);
+    }
+
+    const data = await response.json();
+
+    if (!data.SearchResult?.Items || data.SearchResult.Items.length === 0) {
+      return [];
+    }
+
+    // Amazon APIのレスポンスをProduct型に変換
+    return data.SearchResult.Items.map((item: any) => ({
+      id: `amazon_${item.ASIN}`,
+      name: item.ItemInfo?.Title?.DisplayValue || 'タイトル不明',
+      price: item.Offers?.Listings?.[0]?.Price?.Amount || 0,
+      imageUrl: item.Images?.Primary?.Large?.URL || '',
+      shopName: 'Amazon.co.jp',
+      condition: 'new' as const
+    }));
+  } catch (error) {
+    console.error('Amazon PA-API error:', error);
+    throw error;
+  }
+}
+
+/**
  * 複数のソースから商品を検索
  */
 async function searchFromMultipleSources(keyword: string): Promise<{ products: Product[], source: string }> {
@@ -98,6 +222,19 @@ async function searchFromMultipleSources(keyword: string): Promise<{ products: P
       }
     } catch (error) {
       console.warn('Rakuten API failed, trying next source:', error);
+    }
+  }
+
+  // Amazon Product Advertising APIを試す
+  if (results.length === 0 && process.env.AMAZON_ACCESS_KEY && process.env.AMAZON_SECRET_KEY && process.env.AMAZON_ASSOCIATE_TAG) {
+    try {
+      const amazonProducts = await searchAmazon(keyword);
+      if (amazonProducts.length > 0) {
+        results.push(...amazonProducts);
+        source = 'amazon';
+      }
+    } catch (error) {
+      console.warn('Amazon API failed, trying next source:', error);
     }
   }
 
@@ -158,7 +295,7 @@ export async function GET(request: NextRequest) {
       products,
       source,
       message: source === 'mock'
-        ? 'モックデータを表示中。楽天市場APIやYahoo!ショッピングAPIを設定すると、リアルタイムで商品検索できます。'
+        ? 'モックデータを表示中。楽天市場API、Amazon PA-API、Yahoo!ショッピングAPIを設定すると、リアルタイムで商品検索できます。'
         : undefined
     });
   } catch (error) {
