@@ -20,6 +20,8 @@ export default function Home() {
     analysis: ResaleAnalysis;
   } | null>(null);
   const [error, setError] = useState<string>('');
+  const [searchSource, setSearchSource] = useState<string>('');
+  const [infoMessage, setInfoMessage] = useState<string>('');
 
   // 手動入力用のstate
   const [manualProductName, setManualProductName] = useState('');
@@ -34,6 +36,7 @@ export default function Home() {
 
     setLoading(true);
     setError('');
+    setInfoMessage('');
     setSearchResults([]);
     setSelectedProduct(null);
     setResult(null);
@@ -46,10 +49,15 @@ export default function Home() {
         throw new Error(data.error || '検索に失敗しました');
       }
 
+      setSearchSource(data.source || 'unknown');
+
       if (data.products.length === 0) {
         setError(data.message || '商品が見つかりませんでした');
       } else {
         setSearchResults(data.products);
+        if (data.message) {
+          setInfoMessage(data.message);
+        }
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : '検索中にエラーが発生しました');
@@ -284,12 +292,32 @@ export default function Home() {
                   <p className="text-red-400 text-sm">{error}</p>
                 </div>
               )}
+
+              {/* 情報メッセージ */}
+              {infoMessage && (
+                <div className="mt-4 bg-blue-900/30 border border-blue-700/50 rounded-lg p-4">
+                  <p className="text-blue-400 text-sm">{infoMessage}</p>
+                </div>
+              )}
             </div>
 
             {/* 検索結果 */}
             {searchResults.length > 0 && !selectedProduct && (
               <div className="bg-gradient-to-br from-gray-900 to-black border border-yellow-700/30 rounded-2xl p-8 mb-8">
-                <h3 className="text-xl font-serif text-yellow-500 mb-4">検索結果</h3>
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-xl font-serif text-yellow-500">検索結果</h3>
+                  {searchSource && (
+                    <span className={`text-xs px-3 py-1 rounded-full font-serif ${
+                      searchSource === 'rakuten' ? 'bg-red-900/30 text-red-400 border border-red-700/50' :
+                      searchSource === 'yahoo' ? 'bg-purple-900/30 text-purple-400 border border-purple-700/50' :
+                      'bg-gray-700/30 text-gray-400 border border-gray-600/50'
+                    }`}>
+                      {searchSource === 'rakuten' ? '楽天市場' :
+                       searchSource === 'yahoo' ? 'Yahoo!ショッピング' :
+                       'モックデータ'}
+                    </span>
+                  )}
+                </div>
                 <div className="space-y-3">
                   {searchResults.map((product) => (
                     <button

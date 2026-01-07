@@ -78,9 +78,49 @@ npm start
 
 ## 🔧 API統合（本番環境向け）
 
-現在はモックデータで動作していますが、楽天市場APIやYahoo!ショッピングAPIを統合可能です。
+### 自動商品検索の設定
 
-`app/api/search/route.ts` と `app/api/resale/route.ts` を編集し、環境変数を `.env.local` に設定してください。
+現在は**モックデータ**で動作していますが、APIキーを設定すると**リアルタイムで商品検索**できます！
+
+#### 1. 楽天市場API（推奨）
+
+1. [楽天ウェブサービス](https://webservice.rakuten.co.jp/)にアクセス
+2. アプリIDを取得（無料）
+3. `.env.local` ファイルを作成：
+
+```bash
+cp .env.local.example .env.local
+```
+
+4. `.env.local` にアプリIDを設定：
+
+```
+RAKUTEN_APPLICATION_ID=your_rakuten_app_id_here
+```
+
+5. 開発サーバーを再起動：
+
+```bash
+npm run dev
+```
+
+#### 2. Yahoo!ショッピングAPI（オプション）
+
+1. [Yahoo!デベロッパーネットワーク](https://e.developer.yahoo.co.jp/)にアクセス
+2. Client IDを取得
+3. `.env.local` に追加：
+
+```
+YAHOO_CLIENT_ID=your_yahoo_client_id_here
+```
+
+### 検索ソースの優先順位
+
+1. **楽天市場API**（設定されている場合）
+2. **Yahoo!ショッピングAPI**（楽天が失敗した場合）
+3. **モックデータ**（APIが設定されていない場合）
+
+設定後は、検索結果に「楽天市場」「Yahoo!ショッピング」「モックデータ」のバッジが表示されます。
 
 ## 📊 計算ロジックの詳細
 
