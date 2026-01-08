@@ -36,7 +36,7 @@ az webapp create \
   --name web-app-3 \
   --resource-group azure-web-app-3 \
   --plan web-app-3-plan \
-  --runtime "NODE:20-lts"
+  --runtime "NODE:22-lts"
 ```
 
 または、Azureポータルから手動で作成：
@@ -45,7 +45,7 @@ az webapp create \
 2. 以下の設定で作成：
    - **リソースグループ**: `azure-web-app-3`
    - **名前**: `web-app-3`（グローバルに一意である必要があります）
-   - **ランタイムスタック**: Node 20 LTS
+   - **ランタイムスタック**: Node 22 LTS
    - **オペレーティングシステム**: Linux
    - **リージョン**: Japan East（または任意のリージョン）
    - **App Service プラン**: B1（Basic）以上
@@ -58,7 +58,7 @@ az webapp create \
    ```
    NODE_ENV=production
    PORT=8080
-   WEBSITE_NODE_DEFAULT_VERSION=20-lts
+   WEBSITE_NODE_DEFAULT_VERSION=22-lts
    ```
 
 2. **「構成」→「全般設定」**：
@@ -127,7 +127,7 @@ az webapp log tail --name web-app-3 --resource-group azure-web-app-3
    - ログを確認してエラーメッセージを確認
 
 2. **ビルドエラー**
-   - Node.jsのバージョンが20.x以上であることを確認
+   - Node.jsのバージョンが22.x以上であることを確認
    - `package-lock.json`が最新であることを確認
 
 3. **ポート番号のエラー**
