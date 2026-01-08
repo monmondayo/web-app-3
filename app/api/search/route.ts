@@ -94,8 +94,8 @@ async function searchAmazon(keyword: string): Promise<Product[]> {
   const ACCESS_KEY = process.env.AMAZON_ACCESS_KEY;
   const SECRET_KEY = process.env.AMAZON_SECRET_KEY;
   const ASSOCIATE_TAG = process.env.AMAZON_ASSOCIATE_TAG;
-  const REGION = 'us-east-1'; // PA-API endpoint
-  const HOST = 'webservices.amazon.com';
+  const REGION = 'us-west-2'; // PA-API endpoint (日本の場合は us-west-2)
+  const HOST = 'webservices.amazon.co.jp'; // 日本のエンドポイント
   const MARKETPLACE = 'www.amazon.co.jp';
 
   if (!ACCESS_KEY || !SECRET_KEY || !ASSOCIATE_TAG) {
@@ -108,11 +108,11 @@ async function searchAmazon(keyword: string): Promise<Product[]> {
     Resources: [
       'Images.Primary.Large',
       'ItemInfo.Title',
-      'Offers.Listings.Price'
+      'Offers.Listings.Price',
+      'ItemInfo.ByLineInfo'
     ],
     SearchIndex: 'All',
     ItemCount: 10,
-    SortBy: 'Price:HighToLow',
     PartnerTag: ASSOCIATE_TAG,
     PartnerType: 'Associates',
     Marketplace: MARKETPLACE
@@ -185,7 +185,9 @@ async function searchAmazon(keyword: string): Promise<Product[]> {
     });
 
     if (!response.ok) {
-      throw new Error(`Amazon API error: ${response.status}`);
+      const errorBody = await response.text();
+      console.error('Amazon API error response:', errorBody);
+      throw new Error(`Amazon API error: ${response.status} - ${errorBody}`);
     }
 
     const data = await response.json();
@@ -200,17 +202,24 @@ async function searchAmazon(keyword: string): Promise<Product[]> {
       const productUrl = `https://www.amazon.co.jp/dp/${asin}`;
       const affiliateUrl = `https://www.amazon.co.jp/dp/${asin}?tag=${ASSOCIATE_TAG}`;
 
+      // 価格の取得（円単位で返す）
+      let price = 0;
+      if (item.Offers?.Listings?.[0]?.Price) {
+        const priceInfo = item.Offers.Listings[0].Price;
+        price = priceInfo.Amount || 0;
+      }
+
       return {
         id: `amazon_${asin}`,
         name: item.ItemInfo?.Title?.DisplayValue || 'タイトル不明',
-        price: item.Offers?.Listings?.[0]?.Price?.Amount || 0,
-        imageUrl: item.Images?.Primary?.Large?.URL || '',
+        price: price,
+        imageUrl: item.Images?.Primary?.Large?.URL || item.Images?.Primary?.Medium?.URL || '',
         shopName: 'Amazon.co.jp',
         condition: 'new' as const,
         url: productUrl, // 商品ページURL（API規約準拠）
         affiliateUrl: affiliateUrl // アフィリエイトURL（PA-API規約準拠）
       };
-    });
+    }).filter(product => product.price > 0); // 価格が0のものは除外
   } catch (error) {
     console.error('Amazon PA-API error:', error);
     throw error;
