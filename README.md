@@ -81,9 +81,22 @@ npm start
 
 ## ☁️ デプロイ
 
+### Vercelへのデプロイ（推奨・無料）
+
+**最も簡単な方法！** Next.js開発元が提供する無料ホスティングサービスです。
+
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/monmondayo/web-app-3)
+
+**3ステップで完了**:
+1. [Vercel](https://vercel.com)でGitHubアカウントと連携
+2. このリポジトリをインポート
+3. 「Deploy」をクリック → 完了！
+
+詳細な手順は [VERCEL_DEPLOYMENT.md](./VERCEL_DEPLOYMENT.md) を参照してください。
+
 ### Azure App Serviceへのデプロイ
 
-このアプリはAzure App Serviceにデプロイできます。詳細な手順は [AZURE_DEPLOYMENT.md](./AZURE_DEPLOYMENT.md) を参照してください。
+このアプリはAzure App Serviceにもデプロイできます。詳細な手順は [AZURE_DEPLOYMENT.md](./AZURE_DEPLOYMENT.md) を参照してください。
 
 **クイックスタート**:
 1. Azure App Serviceを作成（Node.js 22 LTS）
