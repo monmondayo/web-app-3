@@ -37,7 +37,8 @@
 - わかりやすい比較表示（例：「スタバのラテより安い」）
 
 ### 4. シェア画像生成
-- html2canvasによる高品質な画像生成
+- modern-screenshotによる高品質な画像生成
+- Tailwind CSS 4のLab色にも対応
 - インスタグラムのストーリーズに最適化
 
 ### 5. 価格分布の可視化
@@ -53,10 +54,12 @@
 
 ## 🛠️ 技術スタック
 
-- Frontend: Next.js 16 (App Router)
-- Language: TypeScript
-- Styling: Tailwind CSS
-- Icons: Lucide React
+- **Frontend**: Next.js 16 (App Router, React 19)
+- **Language**: TypeScript 5
+- **Styling**: Tailwind CSS 4
+- **Chart**: Recharts
+- **Image Generation**: modern-screenshot
+- **Icons**: Lucide React
 - Charts: Recharts
 - Image Generation: html2canvas
 
