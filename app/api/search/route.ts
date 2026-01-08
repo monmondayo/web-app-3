@@ -218,59 +218,45 @@ async function searchAmazon(keyword: string): Promise<Product[]> {
 }
 
 /**
- * 複数のソースから商品を検索
+ * 複数のソースから商品を検索（並列実行）
  */
-async function searchFromMultipleSources(keyword: string): Promise<{ products: Product[], source: string }> {
-  const results: Product[] = [];
-  let source = 'mock';
+async function searchFromMultipleSources(keyword: string): Promise<{
+  rakuten: Product[],
+  amazon: Product[],
+  yahoo: Product[]
+}> {
+  // すべてのAPIを並列で実行
+  const [rakutenResult, amazonResult, yahooResult] = await Promise.allSettled([
+    // 楽天市場API
+    process.env.RAKUTEN_APPLICATION_ID
+      ? searchRakuten(keyword).catch(err => {
+          console.warn('Rakuten API failed:', err);
+          return [];
+        })
+      : Promise.resolve([]),
 
-  // 楽天市場APIを試す
-  if (process.env.RAKUTEN_APPLICATION_ID) {
-    try {
-      const rakutenProducts = await searchRakuten(keyword);
-      if (rakutenProducts.length > 0) {
-        results.push(...rakutenProducts);
-        source = 'rakuten';
-      }
-    } catch (error) {
-      console.warn('Rakuten API failed, trying next source:', error);
-    }
-  }
+    // Amazon Product Advertising API
+    process.env.AMAZON_ACCESS_KEY && process.env.AMAZON_SECRET_KEY && process.env.AMAZON_ASSOCIATE_TAG
+      ? searchAmazon(keyword).catch(err => {
+          console.warn('Amazon API failed:', err);
+          return [];
+        })
+      : Promise.resolve([]),
 
-  // Amazon Product Advertising APIを試す
-  if (results.length === 0 && process.env.AMAZON_ACCESS_KEY && process.env.AMAZON_SECRET_KEY && process.env.AMAZON_ASSOCIATE_TAG) {
-    try {
-      const amazonProducts = await searchAmazon(keyword);
-      if (amazonProducts.length > 0) {
-        results.push(...amazonProducts);
-        source = 'amazon';
-      }
-    } catch (error) {
-      console.warn('Amazon API failed, trying next source:', error);
-    }
-  }
+    // Yahoo!ショッピングAPI
+    process.env.YAHOO_CLIENT_ID
+      ? searchYahoo(keyword).catch(err => {
+          console.warn('Yahoo API failed:', err);
+          return [];
+        })
+      : Promise.resolve([])
+  ]);
 
-  // Yahoo!ショッピングAPIを試す
-  if (results.length === 0 && process.env.YAHOO_CLIENT_ID) {
-    try {
-      const yahooProducts = await searchYahoo(keyword);
-      if (yahooProducts.length > 0) {
-        results.push(...yahooProducts);
-        source = 'yahoo';
-      }
-    } catch (error) {
-      console.warn('Yahoo API failed, falling back to mock data:', error);
-    }
-  }
-
-  // APIが設定されていないか、全て失敗した場合はモックデータを使用
-  if (results.length === 0) {
-    const mockProducts = searchProducts(keyword);
-    results.push(...mockProducts);
-    source = 'mock';
-  }
-
-  return { products: results, source };
+  return {
+    rakuten: rakutenResult.status === 'fulfilled' ? rakutenResult.value : [],
+    amazon: amazonResult.status === 'fulfilled' ? amazonResult.value : [],
+    yahoo: yahooResult.status === 'fulfilled' ? yahooResult.value : []
+  };
 }
 
 /**
@@ -289,26 +275,28 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // 複数ソースから検索
-    const { products, source } = await searchFromMultipleSources(keyword);
+    // 複数ソースから並列検索
+    const results = await searchFromMultipleSources(keyword);
 
-    if (products.length === 0) {
-      return NextResponse.json(
-        {
-          products: [],
-          source: 'none',
-          message: '該当する商品が見つかりませんでした。別のキーワードをお試しください。'
-        },
-        { status: 200 }
-      );
+    // すべて空の場合はモックデータを返す
+    const allEmpty = results.rakuten.length === 0 && results.amazon.length === 0 && results.yahoo.length === 0;
+
+    if (allEmpty) {
+      const mockProducts = searchProducts(keyword);
+      return NextResponse.json({
+        rakuten: [],
+        amazon: [],
+        yahoo: [],
+        mock: mockProducts,
+        message: 'モックデータを表示中。楽天市場API、Amazon PA-API、Yahoo!ショッピングAPIを設定すると、リアルタイムで商品検索できます。'
+      });
     }
 
     return NextResponse.json({
-      products,
-      source,
-      message: source === 'mock'
-        ? 'モックデータを表示中。楽天市場API、Amazon PA-API、Yahoo!ショッピングAPIを設定すると、リアルタイムで商品検索できます。'
-        : undefined
+      rakuten: results.rakuten,
+      amazon: results.amazon,
+      yahoo: results.yahoo,
+      mock: []
     });
   } catch (error) {
     console.error('Search API error:', error);
