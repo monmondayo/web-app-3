@@ -9,7 +9,8 @@ export const mockNewProducts: Record<string, Product[]> = {
       price: 1580000,
       imageUrl: '/placeholder-rolex.jpg',
       shopName: '高級時計専門店',
-      condition: 'new'
+      condition: 'new',
+      url: '#'
     },
     {
       id: '2',
@@ -17,7 +18,8 @@ export const mockNewProducts: Record<string, Product[]> = {
       price: 1420000,
       imageUrl: '/placeholder-rolex.jpg',
       shopName: 'ブランド時計館',
-      condition: 'new'
+      condition: 'new',
+      url: '#'
     },
     {
       id: '3',
@@ -25,7 +27,8 @@ export const mockNewProducts: Record<string, Product[]> = {
       price: 2180000,
       imageUrl: '/placeholder-rolex.jpg',
       shopName: 'ラグジュアリーウォッチ',
-      condition: 'new'
+      condition: 'new',
+      url: '#'
     }
   ],
   'エルメス バーキン': [
@@ -35,7 +38,8 @@ export const mockNewProducts: Record<string, Product[]> = {
       price: 2800000,
       imageUrl: '/placeholder-hermes.jpg',
       shopName: 'エルメス専門店',
-      condition: 'new'
+      condition: 'new',
+      url: '#'
     },
     {
       id: '5',
@@ -43,7 +47,8 @@ export const mockNewProducts: Record<string, Product[]> = {
       price: 3200000,
       imageUrl: '/placeholder-hermes.jpg',
       shopName: 'ブランドバッグ館',
-      condition: 'new'
+      condition: 'new',
+      url: '#'
     }
   ],
   'iPhone 16 Pro Max': [
@@ -53,7 +58,8 @@ export const mockNewProducts: Record<string, Product[]> = {
       price: 234800,
       imageUrl: '/placeholder-iphone.jpg',
       shopName: 'Apple公式',
-      condition: 'new'
+      condition: 'new',
+      url: '#'
     },
     {
       id: '7',
@@ -61,7 +67,8 @@ export const mockNewProducts: Record<string, Product[]> = {
       price: 204800,
       imageUrl: '/placeholder-iphone.jpg',
       shopName: 'Apple公式',
-      condition: 'new'
+      condition: 'new',
+      url: '#'
     }
   ],
   'MacBook Pro': [
@@ -71,7 +78,8 @@ export const mockNewProducts: Record<string, Product[]> = {
       price: 548000,
       imageUrl: '/placeholder-macbook.jpg',
       shopName: 'Apple公式',
-      condition: 'new'
+      condition: 'new',
+      url: '#'
     }
   ],
   'ニコン Z9': [
@@ -81,7 +89,8 @@ export const mockNewProducts: Record<string, Product[]> = {
       price: 698000,
       imageUrl: '/placeholder-nikon.jpg',
       shopName: 'カメラのキタムラ',
-      condition: 'new'
+      condition: 'new',
+      url: '#'
     }
   ],
   'ニコン Z8': [
@@ -91,7 +100,8 @@ export const mockNewProducts: Record<string, Product[]> = {
       price: 548000,
       imageUrl: '/placeholder-nikon.jpg',
       shopName: 'カメラのキタムラ',
-      condition: 'new'
+      condition: 'new',
+      url: '#'
     }
   ],
   'ニコン Z': [
@@ -101,7 +111,8 @@ export const mockNewProducts: Record<string, Product[]> = {
       price: 698000,
       imageUrl: '/placeholder-nikon.jpg',
       shopName: 'カメラのキタムラ',
-      condition: 'new'
+      condition: 'new',
+      url: '#'
     },
     {
       id: '12',
@@ -109,7 +120,8 @@ export const mockNewProducts: Record<string, Product[]> = {
       price: 548000,
       imageUrl: '/placeholder-nikon.jpg',
       shopName: 'カメラのキタムラ',
-      condition: 'new'
+      condition: 'new',
+      url: '#'
     },
     {
       id: '13',
@@ -117,7 +129,8 @@ export const mockNewProducts: Record<string, Product[]> = {
       price: 348000,
       imageUrl: '/placeholder-nikon.jpg',
       shopName: 'ヨドバシカメラ',
-      condition: 'new'
+      condition: 'new',
+      url: '#'
     }
   ],
   'ソニー α7R V': [
@@ -127,7 +140,8 @@ export const mockNewProducts: Record<string, Product[]> = {
       price: 548000,
       imageUrl: '/placeholder-sony.jpg',
       shopName: 'ソニーストア',
-      condition: 'new'
+      condition: 'new',
+      url: '#'
     }
   ],
   'キヤノン EOS R5': [
@@ -137,7 +151,8 @@ export const mockNewProducts: Record<string, Product[]> = {
       price: 628000,
       imageUrl: '/placeholder-canon.jpg',
       shopName: 'キヤノンオンラインショップ',
-      condition: 'new'
+      condition: 'new',
+      url: '#'
     }
   ],
   'ルイヴィトン': [
@@ -147,7 +162,8 @@ export const mockNewProducts: Record<string, Product[]> = {
       price: 280000,
       imageUrl: '/placeholder-lv.jpg',
       shopName: 'ルイヴィトン公式',
-      condition: 'new'
+      condition: 'new',
+      url: '#'
     },
     {
       id: '17',
@@ -155,7 +171,8 @@ export const mockNewProducts: Record<string, Product[]> = {
       price: 198000,
       imageUrl: '/placeholder-lv.jpg',
       shopName: 'ルイヴィトン公式',
-      condition: 'new'
+      condition: 'new',
+      url: '#'
     }
   ],
   'シャネル': [
@@ -165,7 +182,8 @@ export const mockNewProducts: Record<string, Product[]> = {
       price: 980000,
       imageUrl: '/placeholder-chanel.jpg',
       shopName: 'シャネル ブティック',
-      condition: 'new'
+      condition: 'new',
+      url: '#'
     },
     {
       id: '19',
@@ -173,7 +191,8 @@ export const mockNewProducts: Record<string, Product[]> = {
       price: 850000,
       imageUrl: '/placeholder-chanel.jpg',
       shopName: 'シャネル ブティック',
-      condition: 'new'
+      condition: 'new',
+      url: '#'
     }
   ]
 };

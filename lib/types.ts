@@ -6,6 +6,8 @@ export interface Product {
   imageUrl: string;
   shopName: string;
   condition: 'new' | 'used';
+  url: string; // 商品ページURL（API規約準拠のため必須）
+  affiliateUrl?: string; // アフィリエイトリンク（オプション）
 }
 
 // リセールバリュー計算結果の型定義

@@ -39,7 +39,9 @@ async function searchRakuten(keyword: string): Promise<Product[]> {
     price: item.Item.itemPrice,
     imageUrl: item.Item.mediumImageUrls?.[0]?.imageUrl || item.Item.smallImageUrls?.[0]?.imageUrl || '',
     shopName: item.Item.shopName,
-    condition: 'new' as const
+    condition: 'new' as const,
+    url: item.Item.itemUrl, // 商品ページURL（API規約準拠）
+    affiliateUrl: item.Item.affiliateUrl // アフィリエイトURL
   }));
 }
 
@@ -78,7 +80,9 @@ async function searchYahoo(keyword: string): Promise<Product[]> {
     price: parseInt(item.price),
     imageUrl: item.image?.medium || item.image?.small || '',
     shopName: item.seller?.name || 'Yahoo!ショッピング',
-    condition: 'new' as const
+    condition: 'new' as const,
+    url: item.url, // 商品ページURL（API規約準拠）
+    affiliateUrl: item.url // Yahoo!ショッピングの場合、通常URLと同じ
   }));
 }
 
@@ -191,14 +195,22 @@ async function searchAmazon(keyword: string): Promise<Product[]> {
     }
 
     // Amazon APIのレスポンスをProduct型に変換
-    return data.SearchResult.Items.map((item: any) => ({
-      id: `amazon_${item.ASIN}`,
-      name: item.ItemInfo?.Title?.DisplayValue || 'タイトル不明',
-      price: item.Offers?.Listings?.[0]?.Price?.Amount || 0,
-      imageUrl: item.Images?.Primary?.Large?.URL || '',
-      shopName: 'Amazon.co.jp',
-      condition: 'new' as const
-    }));
+    return data.SearchResult.Items.map((item: any) => {
+      const asin = item.ASIN;
+      const productUrl = `https://www.amazon.co.jp/dp/${asin}`;
+      const affiliateUrl = `https://www.amazon.co.jp/dp/${asin}?tag=${ASSOCIATE_TAG}`;
+
+      return {
+        id: `amazon_${asin}`,
+        name: item.ItemInfo?.Title?.DisplayValue || 'タイトル不明',
+        price: item.Offers?.Listings?.[0]?.Price?.Amount || 0,
+        imageUrl: item.Images?.Primary?.Large?.URL || '',
+        shopName: 'Amazon.co.jp',
+        condition: 'new' as const,
+        url: productUrl, // 商品ページURL（API規約準拠）
+        affiliateUrl: affiliateUrl // アフィリエイトURL（PA-API規約準拠）
+      };
+    });
   } catch (error) {
     console.error('Amazon PA-API error:', error);
     throw error;

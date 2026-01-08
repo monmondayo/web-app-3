@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Search, Sparkles, Calculator, Crown, PenLine, List, TrendingUp } from 'lucide-react';
+import { Search, Sparkles, Calculator, Crown, PenLine, List, TrendingUp, ExternalLink } from 'lucide-react';
 import { Product, ResaleAnalysis, JissitsuTadaResult } from '@/lib/types';
 import { calculateJissitsuTada, calculateResaleValue } from '@/lib/resaleCalculator';
 import ResultCard from '@/components/ResultCard';
@@ -162,7 +162,8 @@ export default function Home() {
         price: newPrice,
         imageUrl: '',
         shopName: '手動入力',
-        condition: 'new'
+        condition: 'new',
+        url: '#'
       });
 
       setResult({
@@ -335,14 +336,13 @@ export default function Home() {
                 </div>
                 <div className="space-y-3">
                   {searchResults.map((product) => (
-                    <button
+                    <div
                       key={product.id}
-                      onClick={() => handleSelectProduct(product)}
-                      className="w-full bg-gray-50 hover:bg-indigo-50 border border-gray-200 hover:border-indigo-300 rounded-lg p-4 transition-all text-left group"
+                      className="w-full bg-gray-50 border border-gray-200 rounded-lg p-4 transition-all"
                     >
-                      <div className="flex justify-between items-start">
+                      <div className="flex justify-between items-start mb-2">
                         <div className="flex-1">
-                          <h4 className="text-gray-900 font-serif mb-1 group-hover:text-indigo-700 transition-colors">
+                          <h4 className="text-gray-900 font-serif mb-1">
                             {product.name}
                           </h4>
                           <p className="text-gray-600 text-sm">{product.shopName}</p>
@@ -354,7 +354,26 @@ export default function Home() {
                           <p className="text-gray-500 text-xs">新品</p>
                         </div>
                       </div>
-                    </button>
+                      <div className="flex gap-2 mt-3">
+                        {product.url !== '#' && (
+                          <a
+                            href={product.affiliateUrl || product.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex-1 bg-white hover:bg-gray-50 border border-indigo-300 text-indigo-700 font-serif px-4 py-2 rounded-lg transition-all flex items-center justify-center gap-2 text-sm"
+                          >
+                            <ExternalLink className="w-4 h-4" />
+                            商品ページを見る
+                          </a>
+                        )}
+                        <button
+                          onClick={() => handleSelectProduct(product)}
+                          className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-serif px-4 py-2 rounded-lg transition-all text-sm"
+                        >
+                          この商品で計算
+                        </button>
+                      </div>
+                    </div>
                   ))}
                 </div>
               </div>
@@ -551,10 +570,13 @@ export default function Home() {
       {/* フッター */}
       <footer className="border-t border-indigo-200 bg-white/80 mt-16">
         <div className="container mx-auto px-4 py-8 text-center">
-          <p className="text-gray-600 text-sm font-serif">
+          <p className="text-gray-600 text-sm font-serif mb-3">
             ※本アプリはプロトタイプです。リセールバリューは推定値であり、実際の売却価格を保証するものではありません。
           </p>
-          <p className="text-gray-500 text-xs mt-2">
+          <p className="text-gray-500 text-xs mt-2 mb-2">
+            商品情報は楽天市場、Amazon.co.jp、Yahoo!ショッピングのAPIを利用しています。
+          </p>
+          <p className="text-gray-500 text-xs">
             Powered by Next.js | 賢い買い物を可視化
           </p>
         </div>
