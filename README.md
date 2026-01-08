@@ -79,6 +79,17 @@ npm start
 
 ブラウザで [http://localhost:3000](http://localhost:3000) を開きます。
 
+## ☁️ デプロイ
+
+### Azure App Serviceへのデプロイ
+
+このアプリはAzure App Serviceにデプロイできます。詳細な手順は [AZURE_DEPLOYMENT.md](./AZURE_DEPLOYMENT.md) を参照してください。
+
+**クイックスタート**:
+1. Azure App Serviceを作成（Node.js 20 LTS）
+2. GitHub Secretsに発行プロファイルを設定
+3. `main`ブランチまたは`claude/deploy-azure-web-app-fYLJ3`ブランチにプッシュで自動デプロイ
+
 ## 🔧 API統合（本番環境向け）
 
 ### 自動商品検索の設定
