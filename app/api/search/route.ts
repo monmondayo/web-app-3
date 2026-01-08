@@ -219,7 +219,7 @@ async function searchAmazon(keyword: string): Promise<Product[]> {
         url: productUrl, // 商品ページURL（API規約準拠）
         affiliateUrl: affiliateUrl // アフィリエイトURL（PA-API規約準拠）
       };
-    }).filter(product => product.price > 0); // 価格が0のものは除外
+    }).filter((product: Product) => product.price > 0); // 価格が0のものは除外
   } catch (error) {
     console.error('Amazon PA-API error:', error);
     throw error;
