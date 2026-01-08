@@ -5,6 +5,13 @@
   --foreground: #1a1a1a;
   --font-noto-sans: 'Noto Sans JP', sans-serif;
   --font-noto-serif: 'Noto Serif JP', serif;
+  color-scheme: light;
+}
+
+@supports (color: oklch(0 0 0)) {
+  :root {
+    color-scheme: light;
+  }
 }
 
 @theme inline {

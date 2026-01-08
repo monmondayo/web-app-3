@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useRef } from 'react';
-import html2canvas from 'html2canvas';
+import { domToPng } from 'modern-screenshot';
 import { Download, TrendingUp, Clock, Sparkles } from 'lucide-react';
 import { JissitsuTadaResult, ResaleAnalysis } from '@/lib/types';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
@@ -23,55 +23,19 @@ export default function ResultCard({ result, analysis, productName }: ResultCard
       // Google Fontsの読み込みを待つ
       await document.fonts.ready;
 
-      const canvas = await html2canvas(resultRef.current, {
-        backgroundColor: '#ffffff',
+      // modern-screenshotを使用して画像を生成
+      const dataUrl = await domToPng(resultRef.current, {
         scale: 2,
-        logging: true, // デバッグ用にログを有効化
-        useCORS: true,
-        allowTaint: true,
-        foreignObjectRendering: false, // SVGレンダリングを無効化
-        removeContainer: true,
-        imageTimeout: 0,
-        onclone: (clonedDoc) => {
-          // クローンされたドキュメントのbodyからグラデーションを削除
-          const body = clonedDoc.body;
-          if (body) {
-            body.style.background = '#ffffff';
-            body.style.backgroundImage = 'none';
-          }
-
-          // すべての要素からグラデーションを削除
-          const allElements = clonedDoc.querySelectorAll('*');
-          const clonedWindow = clonedDoc.defaultView;
-          if (clonedWindow) {
-            allElements.forEach((el) => {
-              const htmlEl = el as HTMLElement;
-              try {
-                const styles = clonedWindow.getComputedStyle(htmlEl);
-                const bgImage = styles.backgroundImage;
-                if (bgImage && bgImage.includes('gradient')) {
-                  htmlEl.style.backgroundImage = 'none';
-                }
-              } catch (e) {
-                // スタイル取得に失敗した場合は無視
-              }
-            });
-          }
-
-          // data-html2canvas-ignore要素を削除
-          const ignoredElements = clonedDoc.querySelectorAll('[data-html2canvas-ignore]');
-          ignoredElements.forEach(el => el.remove());
-        }
+        backgroundColor: '#ffffff',
+        style: {
+          background: '#ffffff',
+          backgroundImage: 'none',
+        },
       });
-
-      // Canvasが正常に作成されたか確認
-      if (canvas.width === 0 || canvas.height === 0) {
-        throw new Error('Canvas size is zero');
-      }
 
       const link = document.createElement('a');
       link.download = `実質タダ電卓_${productName.replace(/[/\\?%*:|"<>]/g, '_')}.png`;
-      link.href = canvas.toDataURL('image/png');
+      link.href = dataUrl;
       link.click();
     } catch (error) {
       console.error('画像生成エラー詳細:', error);

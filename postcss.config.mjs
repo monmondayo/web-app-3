@@ -1,6 +1,11 @@
 const config = {
   plugins: {
-    "@tailwindcss/postcss": {},
+    "@tailwindcss/postcss": {
+      future: {
+        // Lab色をサポートするモダン色空間を無効化
+        relativeColorSyntax: false,
+      },
+    },
   },
 };
 
