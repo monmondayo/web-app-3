@@ -19,6 +19,17 @@ export default function ResultCard({ result, analysis, productName }: ResultCard
   const handleDownload = async () => {
     if (!resultRef.current) return;
 
+    // 利用規約に関する確認
+    const confirmed = window.confirm(
+      '画像をダウンロードする前にご確認ください:\n\n' +
+      '・この画像はあなた個人の使用のためにのみダウンロードできます\n' +
+      '・SNS等への投稿は自己責任でお願いします\n' +
+      '・商用利用や再配布は禁止されています\n\n' +
+      '上記を理解した上でダウンロードしますか？'
+    );
+
+    if (!confirmed) return;
+
     try {
       // Google Fontsの読み込みを待つ
       await document.fonts.ready;
@@ -140,14 +151,19 @@ export default function ResultCard({ result, analysis, productName }: ResultCard
       </div>
 
       {/* アクション */}
-      <div className="flex gap-4">
+      <div className="space-y-3">
         <button
           onClick={handleDownload}
-          className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 px-6 rounded-xl transition-all transform hover:scale-105 flex items-center justify-center gap-2 shadow-lg"
+          className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 px-6 rounded-xl transition-all transform hover:scale-105 flex items-center justify-center gap-2 shadow-lg"
         >
           <Download className="w-5 h-5" />
           インスタに投稿する画像をダウンロード
         </button>
+        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+          <p className="text-yellow-800 text-xs leading-relaxed">
+            ⚠️ ダウンロードした画像の使用は自己責任でお願いします。商用利用や再配布は禁止されています。
+          </p>
+        </div>
       </div>
 
       {/* 価格分布グラフ */}

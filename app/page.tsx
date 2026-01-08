@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Search, Sparkles, Calculator, Crown, PenLine, List, TrendingUp } from 'lucide-react';
+import { Search, Sparkles, Calculator, Crown, PenLine, List, TrendingUp, ExternalLink } from 'lucide-react';
 import { Product, ResaleAnalysis, JissitsuTadaResult } from '@/lib/types';
 import { calculateJissitsuTada, calculateResaleValue } from '@/lib/resaleCalculator';
 import ResultCard from '@/components/ResultCard';
@@ -12,7 +12,12 @@ export default function Home() {
   const [searchMode, setSearchMode] = useState<SearchMode>('search');
   const [keyword, setKeyword] = useState('');
   const [loading, setLoading] = useState(false);
-  const [searchResults, setSearchResults] = useState<Product[]>([]);
+  const [searchResults, setSearchResults] = useState<{
+    rakuten: Product[];
+    amazon: Product[];
+    yahoo: Product[];
+    mock: Product[];
+  }>({ rakuten: [], amazon: [], yahoo: [], mock: [] });
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [yearsOfUse, setYearsOfUse] = useState(10);
   const [result, setResult] = useState<{
@@ -20,7 +25,6 @@ export default function Home() {
     analysis: ResaleAnalysis;
   } | null>(null);
   const [error, setError] = useState<string>('');
-  const [searchSource, setSearchSource] = useState<string>('');
   const [infoMessage, setInfoMessage] = useState<string>('');
 
   // 手動入力用のstate
@@ -37,7 +41,7 @@ export default function Home() {
     setLoading(true);
     setError('');
     setInfoMessage('');
-    setSearchResults([]);
+    setSearchResults({ rakuten: [], amazon: [], yahoo: [], mock: [] });
     setSelectedProduct(null);
     setResult(null);
 
@@ -49,15 +53,19 @@ export default function Home() {
         throw new Error(data.error || '検索に失敗しました');
       }
 
-      setSearchSource(data.source || 'unknown');
+      setSearchResults({
+        rakuten: data.rakuten || [],
+        amazon: data.amazon || [],
+        yahoo: data.yahoo || [],
+        mock: data.mock || []
+      });
 
-      if (data.products.length === 0) {
-        setError(data.message || '商品が見つかりませんでした');
-      } else {
-        setSearchResults(data.products);
-        if (data.message) {
-          setInfoMessage(data.message);
-        }
+      const totalResults = (data.rakuten?.length || 0) + (data.amazon?.length || 0) + (data.yahoo?.length || 0) + (data.mock?.length || 0);
+
+      if (totalResults === 0) {
+        setError('商品が見つかりませんでした');
+      } else if (data.message) {
+        setInfoMessage(data.message);
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : '検索中にエラーが発生しました');
@@ -162,7 +170,8 @@ export default function Home() {
         price: newPrice,
         imageUrl: '',
         shopName: '手動入力',
-        condition: 'new'
+        condition: 'new',
+        url: '#'
       });
 
       setResult({
@@ -314,49 +323,126 @@ export default function Home() {
               )}
             </div>
 
-            {/* 検索結果 */}
-            {searchResults.length > 0 && !selectedProduct && (
-              <div className="bg-white border border-indigo-200 rounded-2xl p-8 mb-8 shadow-lg">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-xl font-serif text-gray-800">検索結果</h3>
-                  {searchSource && (
-                    <span className={`text-xs px-3 py-1 rounded-full font-serif ${
-                      searchSource === 'rakuten' ? 'bg-red-50 text-red-700 border border-red-200' :
-                      searchSource === 'amazon' ? 'bg-orange-50 text-orange-700 border border-orange-200' :
-                      searchSource === 'yahoo' ? 'bg-purple-50 text-purple-700 border border-purple-200' :
-                      'bg-gray-50 text-gray-700 border border-gray-200'
-                    }`}>
-                      {searchSource === 'rakuten' ? '楽天市場' :
-                       searchSource === 'amazon' ? 'Amazon.co.jp' :
-                       searchSource === 'yahoo' ? 'Yahoo!ショッピング' :
-                       'モックデータ'}
-                    </span>
-                  )}
+            {/* 検索結果 - 3列レイアウト */}
+            {(searchResults.rakuten.length > 0 || searchResults.amazon.length > 0 || searchResults.yahoo.length > 0 || searchResults.mock.length > 0) && !selectedProduct && (
+              <div className="mb-8">
+                <h3 className="text-2xl font-serif text-gray-800 mb-6 text-center">検索結果</h3>
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                  {/* 楽天市場 */}
+                  <div className="bg-white border-2 border-red-200 rounded-2xl p-6 shadow-lg">
+                    <div className="flex items-center justify-center gap-2 mb-4">
+                      <span className="bg-red-50 text-red-700 px-4 py-2 rounded-full font-serif text-sm border border-red-200">
+                        楽天市場
+                      </span>
+                    </div>
+                    <div className="space-y-3 max-h-[600px] overflow-y-auto">
+                      {searchResults.rakuten.length > 0 ? (
+                        searchResults.rakuten.map((product) => (
+                          <div key={product.id} className="bg-gray-50 border border-gray-200 rounded-lg p-3">
+                            <h4 className="text-gray-900 font-serif text-sm mb-2 line-clamp-2">{product.name}</h4>
+                            <p className="text-indigo-600 font-bold text-lg mb-2">¥{product.price.toLocaleString()}</p>
+                            <div className="flex gap-2">
+                              {product.url !== '#' && (
+                                <a href={product.affiliateUrl || product.url} target="_blank" rel="noopener noreferrer" className="flex-1 bg-white border border-red-300 text-red-700 px-3 py-1.5 rounded text-xs text-center hover:bg-red-50">
+                                  詳細
+                                </a>
+                              )}
+                              <button onClick={() => handleSelectProduct(product)} className="flex-1 bg-red-600 text-white px-3 py-1.5 rounded text-xs hover:bg-red-700">
+                                計算
+                              </button>
+                            </div>
+                          </div>
+                        ))
+                      ) : (
+                        <p className="text-gray-500 text-center py-8 text-sm">商品が見つかりませんでした</p>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Amazon */}
+                  <div className="bg-white border-2 border-orange-200 rounded-2xl p-6 shadow-lg">
+                    <div className="flex items-center justify-center gap-2 mb-4">
+                      <span className="bg-orange-50 text-orange-700 px-4 py-2 rounded-full font-serif text-sm border border-orange-200">
+                        Amazon.co.jp
+                      </span>
+                    </div>
+                    <div className="space-y-3 max-h-[600px] overflow-y-auto">
+                      {searchResults.amazon.length > 0 ? (
+                        searchResults.amazon.map((product) => (
+                          <div key={product.id} className="bg-gray-50 border border-gray-200 rounded-lg p-3">
+                            <h4 className="text-gray-900 font-serif text-sm mb-2 line-clamp-2">{product.name}</h4>
+                            <p className="text-indigo-600 font-bold text-lg mb-2">¥{product.price.toLocaleString()}</p>
+                            <div className="flex gap-2">
+                              {product.url !== '#' && (
+                                <a href={product.affiliateUrl || product.url} target="_blank" rel="noopener noreferrer" className="flex-1 bg-white border border-orange-300 text-orange-700 px-3 py-1.5 rounded text-xs text-center hover:bg-orange-50">
+                                  詳細
+                                </a>
+                              )}
+                              <button onClick={() => handleSelectProduct(product)} className="flex-1 bg-orange-600 text-white px-3 py-1.5 rounded text-xs hover:bg-orange-700">
+                                計算
+                              </button>
+                            </div>
+                          </div>
+                        ))
+                      ) : (
+                        <p className="text-gray-500 text-center py-8 text-sm">商品が見つかりませんでした</p>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Yahoo!ショッピング */}
+                  <div className="bg-white border-2 border-purple-200 rounded-2xl p-6 shadow-lg">
+                    <div className="flex items-center justify-center gap-2 mb-4">
+                      <span className="bg-purple-50 text-purple-700 px-4 py-2 rounded-full font-serif text-sm border border-purple-200">
+                        Yahoo!ショッピング
+                      </span>
+                    </div>
+                    <div className="space-y-3 max-h-[600px] overflow-y-auto">
+                      {searchResults.yahoo.length > 0 ? (
+                        searchResults.yahoo.map((product) => (
+                          <div key={product.id} className="bg-gray-50 border border-gray-200 rounded-lg p-3">
+                            <h4 className="text-gray-900 font-serif text-sm mb-2 line-clamp-2">{product.name}</h4>
+                            <p className="text-indigo-600 font-bold text-lg mb-2">¥{product.price.toLocaleString()}</p>
+                            <div className="flex gap-2">
+                              {product.url !== '#' && (
+                                <a href={product.affiliateUrl || product.url} target="_blank" rel="noopener noreferrer" className="flex-1 bg-white border border-purple-300 text-purple-700 px-3 py-1.5 rounded text-xs text-center hover:bg-purple-50">
+                                  詳細
+                                </a>
+                              )}
+                              <button onClick={() => handleSelectProduct(product)} className="flex-1 bg-purple-600 text-white px-3 py-1.5 rounded text-xs hover:bg-purple-700">
+                                計算
+                              </button>
+                            </div>
+                          </div>
+                        ))
+                      ) : (
+                        <p className="text-gray-500 text-center py-8 text-sm">商品が見つかりませんでした</p>
+                      )}
+                    </div>
+                  </div>
                 </div>
-                <div className="space-y-3">
-                  {searchResults.map((product) => (
-                    <button
-                      key={product.id}
-                      onClick={() => handleSelectProduct(product)}
-                      className="w-full bg-gray-50 hover:bg-indigo-50 border border-gray-200 hover:border-indigo-300 rounded-lg p-4 transition-all text-left group"
-                    >
-                      <div className="flex justify-between items-start">
-                        <div className="flex-1">
-                          <h4 className="text-gray-900 font-serif mb-1 group-hover:text-indigo-700 transition-colors">
-                            {product.name}
-                          </h4>
-                          <p className="text-gray-600 text-sm">{product.shopName}</p>
+
+                {/* モックデータの表示（すべてのAPIが利用不可の場合） */}
+                {searchResults.mock.length > 0 && (
+                  <div className="mt-6 bg-white border border-gray-200 rounded-2xl p-6 shadow-lg">
+                    <div className="flex items-center justify-center gap-2 mb-4">
+                      <span className="bg-gray-50 text-gray-700 px-4 py-2 rounded-full font-serif text-sm border border-gray-200">
+                        モックデータ
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                      {searchResults.mock.map((product) => (
+                        <div key={product.id} className="bg-gray-50 border border-gray-200 rounded-lg p-3">
+                          <h4 className="text-gray-900 font-serif text-sm mb-2 line-clamp-2">{product.name}</h4>
+                          <p className="text-indigo-600 font-bold text-lg mb-2">¥{product.price.toLocaleString()}</p>
+                          <button onClick={() => handleSelectProduct(product)} className="w-full bg-indigo-600 text-white px-3 py-1.5 rounded text-xs hover:bg-indigo-700">
+                            計算
+                          </button>
                         </div>
-                        <div className="text-right">
-                          <p className="text-indigo-600 font-bold text-xl">
-                            ¥{product.price.toLocaleString()}
-                          </p>
-                          <p className="text-gray-500 text-xs">新品</p>
-                        </div>
-                      </div>
-                    </button>
-                  ))}
-                </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </>
@@ -534,7 +620,7 @@ export default function Home() {
               onClick={() => {
                 setResult(null);
                 setSelectedProduct(null);
-                setSearchResults([]);
+                setSearchResults({ rakuten: [], amazon: [], yahoo: [], mock: [] });
                 setKeyword('');
                 setManualProductName('');
                 setManualNewPrice('');
@@ -551,10 +637,13 @@ export default function Home() {
       {/* フッター */}
       <footer className="border-t border-indigo-200 bg-white/80 mt-16">
         <div className="container mx-auto px-4 py-8 text-center">
-          <p className="text-gray-600 text-sm font-serif">
+          <p className="text-gray-600 text-sm font-serif mb-3">
             ※本アプリはプロトタイプです。リセールバリューは推定値であり、実際の売却価格を保証するものではありません。
           </p>
-          <p className="text-gray-500 text-xs mt-2">
+          <p className="text-gray-500 text-xs mt-2 mb-2">
+            商品情報は楽天市場、Amazon.co.jp、Yahoo!ショッピングのAPIを利用しています。
+          </p>
+          <p className="text-gray-500 text-xs">
             Powered by Next.js | 賢い買い物を可視化
           </p>
         </div>
