@@ -153,12 +153,19 @@ export function generatePriceDistribution(priceList: number[]) {
   const binCount = Math.min(10, Math.floor(priceList.length / 3)); // ビン数
   const binSize = range / binCount;
 
-  const bins = Array(binCount).fill(0).map((_, i) => ({
-    range: `${Math.round(min + binSize * i / 10000)}万`,
-    count: 0,
-    minPrice: min + binSize * i,
-    maxPrice: min + binSize * (i + 1)
-  }));
+  const bins = Array(binCount).fill(0).map((_, i) => {
+    const rangeMin = min + binSize * i;
+    const rangeMax = min + binSize * (i + 1);
+    const rangeMinMan = Math.round(rangeMin / 10000);
+    const rangeMaxMan = Math.round(rangeMax / 10000);
+
+    return {
+      range: `${rangeMinMan}-${rangeMaxMan}万`,
+      count: 0,
+      minPrice: rangeMin,
+      maxPrice: rangeMax
+    };
+  });
 
   priceList.forEach(price => {
     const binIndex = Math.min(
