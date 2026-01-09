@@ -77,63 +77,63 @@ export default function ResultCard({ result, analysis, productName }: ResultCard
       {/* ダウンロード可能な結果カード */}
       <div
         ref={resultRef}
-        className="bg-white border-2 border-indigo-300 rounded-2xl p-8 shadow-2xl"
+        className="bg-white border-2 border-indigo-300 rounded-2xl p-4 md:p-8 shadow-2xl"
       >
         {/* ヘッダー */}
-        <div className="text-center mb-8">
+        <div className="text-center mb-6 md:mb-8">
           <div className="flex items-center justify-center gap-2 mb-2">
-            <span className="text-indigo-600 text-2xl">✨</span>
-            <h2 className="text-3xl font-serif text-indigo-900 tracking-wide">
-              実質タダ電卓 Pro
+            <span className="text-indigo-600 text-xl md:text-2xl">✨</span>
+            <h2 className="text-2xl md:text-3xl font-serif text-indigo-900 tracking-wide">
+              実質タダ電卓
             </h2>
-            <span className="text-indigo-600 text-2xl">✨</span>
+            <span className="text-indigo-600 text-xl md:text-2xl">✨</span>
           </div>
-          <p className="text-sm text-indigo-600 font-serif">リセールバリュー分析</p>
+          <p className="text-xs md:text-sm text-indigo-600 font-serif">リセールバリュー分析</p>
         </div>
 
         {/* 商品名 */}
-        <div className="mb-6 text-center">
-          <p className="text-gray-800 text-lg font-serif">{productName}</p>
+        <div className="mb-4 md:mb-6 text-center">
+          <p className="text-gray-800 text-base md:text-lg font-serif break-words px-2">{productName}</p>
         </div>
 
         {/* メイン結果 */}
-        <div className="bg-indigo-600 border border-indigo-500 rounded-xl p-6 mb-6 shadow-lg">
-          <div className="text-center mb-4">
-            <p className="text-indigo-200 text-sm mb-2 font-serif">1日あたりのコスト</p>
-            <p className="text-white text-6xl font-bold mb-2">
+        <div className="bg-indigo-600 border border-indigo-500 rounded-xl p-4 md:p-6 mb-4 md:mb-6 shadow-lg">
+          <div className="text-center mb-3 md:mb-4">
+            <p className="text-indigo-200 text-xs md:text-sm mb-2 font-serif">1日あたりのコスト</p>
+            <p className="text-white text-4xl md:text-6xl font-bold mb-2">
               ¥{result.dailyCost.toLocaleString()}
             </p>
-            <p className="text-indigo-100 text-2xl font-serif">{result.comparison}</p>
+            <p className="text-indigo-100 text-lg md:text-2xl font-serif">{result.comparison}</p>
           </div>
 
-          <div className="border-t border-indigo-400 pt-4 mt-4">
-            <p className="text-white text-center text-lg font-serif">
+          <div className="border-t border-indigo-400 pt-3 md:pt-4 mt-3 md:mt-4">
+            <p className="text-white text-center text-sm md:text-lg font-serif">
               {result.savingsMessage}
             </p>
           </div>
         </div>
 
         {/* 詳細情報 */}
-        <div className="grid grid-cols-2 gap-4 mb-6">
-          <div className="bg-white border border-indigo-200 rounded-lg p-4 shadow">
+        <div className="grid grid-cols-2 gap-3 md:gap-4 mb-4 md:mb-6">
+          <div className="bg-white border border-indigo-200 rounded-lg p-3 md:p-4 shadow">
             <p className="text-indigo-600 text-xs mb-1 font-serif">購入価格</p>
-            <p className="text-gray-900 text-xl font-bold">
+            <p className="text-gray-900 text-lg md:text-xl font-bold">
               ¥{result.itemPrice.toLocaleString()}
             </p>
           </div>
-          <div className="bg-white border border-indigo-200 rounded-lg p-4 shadow">
+          <div className="bg-white border border-indigo-200 rounded-lg p-3 md:p-4 shadow">
             <p className="text-indigo-600 text-xs mb-1 font-serif">推定リセール</p>
-            <p className="text-gray-900 text-xl font-bold">
+            <p className="text-gray-900 text-lg md:text-xl font-bold">
               ¥{result.estimatedResaleValue.toLocaleString()}
             </p>
           </div>
-          <div className="bg-white border border-indigo-200 rounded-lg p-4 shadow">
+          <div className="bg-white border border-indigo-200 rounded-lg p-3 md:p-4 shadow">
             <p className="text-indigo-600 text-xs mb-1 font-serif">使用期間</p>
-            <p className="text-gray-900 text-xl font-bold">{result.yearsOfUse}年</p>
+            <p className="text-gray-900 text-lg md:text-xl font-bold">{result.yearsOfUse}年</p>
           </div>
-          <div className="bg-white border border-indigo-200 rounded-lg p-4 shadow">
+          <div className="bg-white border border-indigo-200 rounded-lg p-3 md:p-4 shadow">
             <p className="text-indigo-600 text-xs mb-1 font-serif">実質コスト</p>
-            <p className="text-gray-900 text-xl font-bold">
+            <p className="text-gray-900 text-lg md:text-xl font-bold">
               ¥{(result.itemPrice - result.estimatedResaleValue).toLocaleString()}
             </p>
           </div>

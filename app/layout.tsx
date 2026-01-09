@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "実質タダ電卓 Pro | Nagoya Vibe Edition",
+  title: "実質タダ電卓 | Nagoya Vibe Edition",
   description: "高級品のリセールバリューを計算し、実質タダを証明する電卓アプリ。ロレックス、エルメス、iPhoneなど、中古相場データから推定リセール価格を自動計算。",
   keywords: "リセールバリュー, 実質タダ, 高級品, 中古相場, ロレックス, エルメス, 資産価値",
 };
