@@ -1,4 +1,4 @@
-# 実質タダ電卓 Pro（Nagoya Vibe Edition）
+# 実質タダ電卓（Nagoya Vibe Edition）
 
 高級品のリセールバリューを計算し、「実質タダ」であることを数字で証明するWebアプリケーション。
 

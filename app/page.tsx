@@ -204,33 +204,33 @@ export default function Home() {
     <div className="min-h-screen text-gray-900">
       {/* ヘッダー */}
       <header className="border-b border-indigo-200 bg-white/80 backdrop-blur-sm sticky top-0 z-50 shadow-sm">
-        <div className="container mx-auto px-4 py-6">
-          <div className="flex items-center justify-center gap-3">
-            <Sparkles className="w-8 h-8 text-indigo-600" />
-            <h1 className="text-4xl font-serif text-indigo-900 tracking-wide">
-              実質タダ電卓 Pro
+        <div className="container mx-auto px-4 py-4 md:py-6">
+          <div className="flex items-center justify-center gap-2 md:gap-3">
+            <Sparkles className="w-6 h-6 md:w-8 md:h-8 text-indigo-600" />
+            <h1 className="text-2xl md:text-4xl font-serif text-indigo-900 tracking-wide">
+              実質タダ電卓
             </h1>
-            <Sparkles className="w-8 h-8 text-indigo-600" />
+            <Sparkles className="w-6 h-6 md:w-8 md:h-8 text-indigo-600" />
           </div>
-          <p className="text-center text-indigo-600 mt-2 font-serif text-sm">
+          <p className="text-center text-indigo-600 mt-2 font-serif text-xs md:text-sm">
             リセールバリューで賢い買い物を可視化
           </p>
         </div>
       </header>
 
       {/* メインコンテンツ */}
-      <main className="container mx-auto px-4 py-12 max-w-4xl">
+      <main className="container mx-auto px-4 py-6 md:py-12 max-w-4xl">
         {/* イントロ */}
         {!result && (
-          <div className="text-center mb-12">
-            <div className="flex items-center justify-center gap-2 mb-4">
-              <TrendingUp className="w-6 h-6 text-indigo-600" />
-              <h2 className="text-2xl font-serif text-gray-800">
+          <div className="text-center mb-8 md:mb-12">
+            <div className="flex items-center justify-center gap-2 mb-3 md:mb-4">
+              <TrendingUp className="w-5 h-5 md:w-6 md:h-6 text-indigo-600" />
+              <h2 className="text-xl md:text-2xl font-serif text-gray-800">
                 リセールバリューで「実質タダ」を証明
               </h2>
-              <TrendingUp className="w-6 h-6 text-indigo-600" />
+              <TrendingUp className="w-5 h-5 md:w-6 md:h-6 text-indigo-600" />
             </div>
-            <p className="text-gray-600 max-w-2xl mx-auto leading-relaxed">
+            <p className="text-sm md:text-base text-gray-600 max-w-2xl mx-auto leading-relaxed px-2">
               欲しい高級品を検索すると、中古相場データから推定リセールバリューを自動計算。
               購入価格との差額を日割りで表示し、「実質タダ」であることを数字で証明します。
             </p>
@@ -239,10 +239,10 @@ export default function Home() {
 
         {/* モード切り替えタブ */}
         {!result && (
-          <div className="flex gap-2 mb-6 justify-center">
+          <div className="flex gap-2 mb-6 justify-center flex-wrap">
             <button
               onClick={() => setSearchMode('search')}
-              className={`flex items-center gap-2 px-6 py-3 rounded-lg font-serif transition-all ${
+              className={`flex items-center gap-2 px-4 md:px-6 py-2 md:py-3 rounded-lg font-serif transition-all text-sm md:text-base ${
                 searchMode === 'search'
                   ? 'bg-indigo-600 text-white shadow-lg'
                   : 'bg-white text-indigo-600 hover:bg-indigo-50 border border-indigo-200'
@@ -253,7 +253,7 @@ export default function Home() {
             </button>
             <button
               onClick={() => setSearchMode('manual')}
-              className={`flex items-center gap-2 px-6 py-3 rounded-lg font-serif transition-all ${
+              className={`flex items-center gap-2 px-4 md:px-6 py-2 md:py-3 rounded-lg font-serif transition-all text-sm md:text-base ${
                 searchMode === 'manual'
                   ? 'bg-indigo-600 text-white shadow-lg'
                   : 'bg-white text-indigo-600 hover:bg-indigo-50 border border-indigo-200'
