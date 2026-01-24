@@ -186,8 +186,11 @@ async function searchAmazon(keyword: string): Promise<Product[]> {
 
     if (!response.ok) {
       const errorBody = await response.text();
-      console.error('Amazon API error response:', errorBody);
-      throw new Error(`Amazon API error: ${response.status} - ${errorBody}`);
+      // 本番環境ではエラー詳細をログに出力しない（機密情報保護）
+      if (process.env.NODE_ENV === 'development') {
+        console.error('Amazon API error response:', errorBody);
+      }
+      throw new Error(`Amazon API error: ${response.status}`);
     }
 
     const data = await response.json();
