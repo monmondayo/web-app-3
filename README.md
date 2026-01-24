@@ -6,6 +6,8 @@
 ![TypeScript](https://img.shields.io/badge/TypeScript-5-blue?style=flat-square&logo=typescript)
 ![Tailwind CSS](https://img.shields.io/badge/Tailwind-CSS-38bdf8?style=flat-square&logo=tailwind-css)
 
+<img width="1808" height="1172" alt="image" src="https://github.com/user-attachments/assets/a3453f0e-a91f-45af-b6f9-66dc68345a10" />
+
 ## 🌟 主な機能
 
 ### 1. 2つの入力モード
