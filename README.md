@@ -60,8 +60,6 @@
 - **Chart**: Recharts
 - **Image Generation**: modern-screenshot
 - **Icons**: Lucide React
-- Charts: Recharts
-- Image Generation: html2canvas
 
 ## 📦 セットアップ
 
@@ -192,10 +190,45 @@ YAHOO_CLIENT_ID=your_yahoo_client_id_here
 - 使用期間: 10年
 - 日割りコスト: ¥24/日 → **「缶コーヒーより安い」**
 
+## 🔒 セキュリティとレート制限
+
+このアプリケーションは一般公開を想定した以下のセキュリティ対策を実装しています：
+
+### APIレート制限
+
+- **制限**: 1分間に30リクエストまで（IP単位）
+- **実装場所**: `middleware.ts`
+- **超過時**: HTTP 429エラーとリトライ推奨時間を返却
+
+### 環境変数の保護
+
+- すべてのAPIキーは環境変数で管理
+- `.gitignore`でシークレットファイルを除外
+- `.env.local.example`にはサンプル値のみ記載
+
+### セキュリティベストプラクティス
+
+1. **本番環境へのデプロイ前**:
+   ```bash
+   # 依存パッケージの脆弱性チェック
+   npm audit
+
+   # 修正可能な脆弱性を自動修正
+   npm audit fix
+   ```
+
+2. **環境変数の設定**:
+   - Vercel: Dashboard > Settings > Environment Variables
+   - Azure: Configuration > Application Settings
+
+3. **定期的なメンテナンス**:
+   - 依存パッケージの定期更新
+   - セキュリティアップデートの適用
+
 ## 📝 プロジェクト構造
 
 ```
-web-qpp-3/
+web-app-3/
 ├── app/
 │   ├── api/search/route.ts      # 商品検索API
 │   ├── api/resale/route.ts      # リセールバリュー計算API
