@@ -53,13 +53,19 @@ async function searchRakuten(keyword: string): Promise<Product[]> {
     throw new Error('RAKUTEN_APPLICATION_ID is not set');
   }
 
-  // 最新のAPIバージョン 20220601 を使用
-  const url = new URL('https://app.rakuten.co.jp/services/api/IchibaItem/Search/20220601');
+  // キーワードのサニタイズ（空白のトリム、連続空白の除去）
+  const sanitizedKeyword = keyword.trim().replace(/\s+/g, ' ');
+  if (!sanitizedKeyword) {
+    return [];
+  }
+
+  // 安定版APIバージョン 20170706 を使用
+  const url = new URL('https://app.rakuten.co.jp/services/api/IchibaItem/Search/20170706');
   url.searchParams.append('format', 'json');
-  url.searchParams.append('keyword', keyword);
+  url.searchParams.append('keyword', sanitizedKeyword);
   url.searchParams.append('applicationId', RAKUTEN_APP_ID);
   url.searchParams.append('hits', '10');
-  url.searchParams.append('sort', '-itemPrice'); // 価格が高い順
+  // sortパラメータを削除（デフォルトのstandard順を使用）
 
   const response = await fetchWithRetry(url.toString());
 
