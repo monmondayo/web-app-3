@@ -4,6 +4,46 @@ import { Product } from '@/lib/types';
 import crypto from 'crypto';
 
 /**
+ * 指数バックオフ付きリトライを行うfetch
+ */
+async function fetchWithRetry(
+  url: string,
+  options: RequestInit = {},
+  maxRetries: number = 3,
+  baseDelay: number = 1000
+): Promise<Response> {
+  let lastError: Error | null = null;
+
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
+    try {
+      const response = await fetch(url, {
+        ...options,
+        signal: AbortSignal.timeout(10000) // 10秒タイムアウト
+      });
+
+      // 5xx エラーの場合はリトライ
+      if (response.status >= 500 && attempt < maxRetries - 1) {
+        const delay = baseDelay * Math.pow(2, attempt);
+        await new Promise(resolve => setTimeout(resolve, delay));
+        continue;
+      }
+
+      return response;
+    } catch (error) {
+      lastError = error as Error;
+      // タイムアウトやネットワークエラーの場合はリトライ
+      if (attempt < maxRetries - 1) {
+        const delay = baseDelay * Math.pow(2, attempt);
+        await new Promise(resolve => setTimeout(resolve, delay));
+        continue;
+      }
+    }
+  }
+
+  throw lastError || new Error('Max retries exceeded');
+}
+
+/**
  * 楽天市場APIから商品を検索
  */
 async function searchRakuten(keyword: string): Promise<Product[]> {
@@ -13,17 +53,19 @@ async function searchRakuten(keyword: string): Promise<Product[]> {
     throw new Error('RAKUTEN_APPLICATION_ID is not set');
   }
 
-  const url = new URL('https://app.rakuten.co.jp/services/api/IchibaItem/Search/20170706');
+  // 最新のAPIバージョン 20220601 を使用
+  const url = new URL('https://app.rakuten.co.jp/services/api/IchibaItem/Search/20220601');
   url.searchParams.append('format', 'json');
   url.searchParams.append('keyword', keyword);
   url.searchParams.append('applicationId', RAKUTEN_APP_ID);
   url.searchParams.append('hits', '10');
   url.searchParams.append('sort', '-itemPrice'); // 価格が高い順
 
-  const response = await fetch(url.toString());
+  const response = await fetchWithRetry(url.toString());
 
   if (!response.ok) {
-    throw new Error(`Rakuten API error: ${response.status}`);
+    const errorText = await response.text().catch(() => '');
+    throw new Error(`Rakuten API error: ${response.status} ${errorText}`);
   }
 
   const data = await response.json();
@@ -61,10 +103,11 @@ async function searchYahoo(keyword: string): Promise<Product[]> {
   url.searchParams.append('results', '10');
   url.searchParams.append('sort', '-price'); // 価格が高い順
 
-  const response = await fetch(url.toString());
+  const response = await fetchWithRetry(url.toString());
 
   if (!response.ok) {
-    throw new Error(`Yahoo API error: ${response.status}`);
+    const errorText = await response.text().catch(() => '');
+    throw new Error(`Yahoo API error: ${response.status} ${errorText}`);
   }
 
   const data = await response.json();
@@ -181,7 +224,8 @@ async function searchAmazon(keyword: string): Promise<Product[]> {
         ...headers,
         'Authorization': authorizationHeader
       },
-      body: payload
+      body: payload,
+      signal: AbortSignal.timeout(10000) // 10秒タイムアウト
     });
 
     if (!response.ok) {
