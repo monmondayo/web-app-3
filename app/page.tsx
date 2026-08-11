@@ -223,6 +223,17 @@ export default function Home() {
     }
   };
 
+  const handleReset = () => {
+    setResult(null);
+    setSelectedProduct(null);
+    setSearchResults({ rakuten: [], amazon: [], yahoo: [], mock: [] });
+    setServiceStatuses(null);
+    setKeyword('');
+    setManualProductName('');
+    setManualNewPrice('');
+    setManualUsedPrice('');
+  };
+
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
       handleSearch();
@@ -239,25 +250,35 @@ export default function Home() {
   ];
 
   return (
-    <div className="min-h-screen text-gray-900">
+    <div
+      className={`min-h-screen text-gray-900 ${
+        result ? 'lg:flex lg:h-screen lg:flex-col lg:overflow-hidden' : ''
+      }`}
+    >
       {/* ヘッダー */}
-      <header className="border-b border-indigo-200 bg-white/80 backdrop-blur-sm sticky top-0 z-50 shadow-sm">
-        <div className="container mx-auto px-4 py-4 md:py-6">
+      <header className="sticky top-0 z-50 shrink-0 border-b border-indigo-200 bg-white/80 shadow-sm backdrop-blur-sm">
+        <div className={`container mx-auto px-4 ${result ? 'py-2' : 'py-4 md:py-6'}`}>
           <div className="flex items-center justify-center gap-2 md:gap-3">
-            <Sparkles className="w-6 h-6 md:w-8 md:h-8 text-indigo-600" />
-            <h1 className="text-2xl md:text-4xl font-serif text-indigo-900 tracking-wide">
+            <Sparkles className={`${result ? 'h-5 w-5 md:h-6 md:w-6' : 'h-6 w-6 md:h-8 md:w-8'} text-indigo-600`} />
+            <h1 className={`${result ? 'text-xl md:text-2xl' : 'text-2xl md:text-4xl'} font-serif tracking-wide text-indigo-900`}>
               実質タダ電卓
             </h1>
-            <Sparkles className="w-6 h-6 md:w-8 md:h-8 text-indigo-600" />
+            <Sparkles className={`${result ? 'h-5 w-5 md:h-6 md:w-6' : 'h-6 w-6 md:h-8 md:w-8'} text-indigo-600`} />
           </div>
-          <p className="text-center text-indigo-600 mt-2 font-serif text-xs md:text-sm">
+          <p className={`text-center font-serif text-xs text-indigo-600 md:text-sm ${result ? 'mt-0.5 lg:hidden' : 'mt-2'}`}>
             リセールバリューで賢い買い物を可視化
           </p>
         </div>
       </header>
 
       {/* メインコンテンツ */}
-      <main className="container mx-auto px-4 py-6 md:py-12 max-w-4xl">
+      <main
+        className={`container mx-auto px-4 ${
+          result
+            ? 'max-w-7xl py-3 lg:min-h-0 lg:flex-1'
+            : 'max-w-4xl py-6 md:py-12'
+        }`}
+      >
         {/* イントロ */}
         {!result && (
           <div className="text-center mb-8 md:mb-12">
@@ -651,33 +672,13 @@ export default function Home() {
             result={result.calculation}
             analysis={result.analysis}
             productName={selectedProduct.name}
+            onReset={handleReset}
           />
-        )}
-
-        {/* 新しく計算ボタン */}
-        {result && (
-          <div className="text-center mt-8">
-            <button
-              onClick={() => {
-                setResult(null);
-                setSelectedProduct(null);
-                setSearchResults({ rakuten: [], amazon: [], yahoo: [], mock: [] });
-                setServiceStatuses(null);
-                setKeyword('');
-                setManualProductName('');
-                setManualNewPrice('');
-                setManualUsedPrice('');
-              }}
-              className="bg-white hover:bg-gray-50 text-indigo-600 font-serif px-8 py-3 rounded-lg border-2 border-indigo-300 hover:border-indigo-400 transition-all shadow-md"
-            >
-              別の商品で計算する
-            </button>
-          </div>
         )}
       </main>
 
       {/* フッター */}
-      <footer className="border-t border-indigo-200 bg-white/80 mt-16">
+      <footer className={`${result ? 'hidden' : 'mt-16'} border-t border-indigo-200 bg-white/80`}>
         <div className="container mx-auto px-4 py-8 text-center">
           <p className="text-gray-600 text-sm font-serif mb-3">
             ※本アプリはプロトタイプです。リセールバリューは推定値であり、実際の売却価格を保証するものではありません。
