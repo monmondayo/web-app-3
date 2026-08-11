@@ -144,8 +144,8 @@ function firstImageUrl(
  * 楽天市場商品検索API 2026-07-01から商品を検索
  */
 async function searchRakuten(keyword: string): Promise<Product[]> {
-  const applicationId = process.env.RAKUTEN_APPLICATION_ID;
-  const accessKey = process.env.RAKUTEN_ACCESS_KEY;
+  const applicationId = process.env.RAKUTEN_APPLICATION_ID?.trim();
+  const accessKey = process.env.RAKUTEN_ACCESS_KEY?.trim();
 
   if (!applicationId || !accessKey) {
     throw new Error('Rakuten credentials are not configured');
@@ -243,11 +243,11 @@ async function searchYahoo(keyword: string): Promise<Product[]> {
 
 function getAmazonCredentials() {
   return {
-    clientId: process.env.AMAZON_CREATORS_CLIENT_ID,
-    clientSecret: process.env.AMAZON_CREATORS_CLIENT_SECRET,
+    clientId: process.env.AMAZON_CREATORS_CLIENT_ID?.trim(),
+    clientSecret: process.env.AMAZON_CREATORS_CLIENT_SECRET?.trim(),
     credentialVersion:
-      process.env.AMAZON_CREATORS_CREDENTIAL_VERSION || '3.3',
-    associateTag: process.env.AMAZON_ASSOCIATE_TAG,
+      process.env.AMAZON_CREATORS_CREDENTIAL_VERSION?.trim() || '3.3',
+    associateTag: process.env.AMAZON_ASSOCIATE_TAG?.trim(),
   };
 }
 
@@ -451,9 +451,16 @@ async function runProvider(
     };
   } catch (error) {
     const providerError = error instanceof ProviderError ? error : undefined;
+    const cause = error instanceof Error ? error.cause : undefined;
+    const causeCode =
+      cause && typeof cause === 'object' && 'code' in cause
+        ? String((cause as { code?: unknown }).code)
+        : undefined;
     console.warn(`${provider} API failed`, {
       status: providerError?.statusCode,
       code: providerError?.errorCode,
+      errorName: error instanceof Error ? error.name : typeof error,
+      causeCode,
     });
     return {
       products: [],
