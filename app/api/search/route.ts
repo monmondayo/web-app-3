@@ -146,6 +146,11 @@ function firstImageUrl(
 async function searchRakuten(keyword: string): Promise<Product[]> {
   const applicationId = process.env.RAKUTEN_APPLICATION_ID?.trim();
   const accessKey = process.env.RAKUTEN_ACCESS_KEY?.trim();
+  const applicationUrl = (
+    process.env.RAKUTEN_APPLICATION_URL || 'https://web-app-3.vercel.app'
+  )
+    .trim()
+    .replace(/\/$/, '');
 
   if (!applicationId || !accessKey) {
     throw new Error('Rakuten credentials are not configured');
@@ -164,12 +169,20 @@ async function searchRakuten(keyword: string): Promise<Product[]> {
   url.searchParams.set('accessKey', accessKey);
   url.searchParams.set('hits', '10');
 
-  const response = await fetchWithRetry(url.toString());
+  const response = await fetchWithRetry(url.toString(), {
+    headers: {
+      Origin: applicationUrl,
+      Referer: `${applicationUrl}/`,
+    },
+  });
 
   if (!response.ok) await throwProviderError('rakuten', response);
 
-  const data = (await response.json()) as { items?: RakutenItem[] };
-  return (data.items || [])
+  const data = (await response.json()) as {
+    items?: RakutenItem[];
+    Items?: RakutenItem[];
+  };
+  return (data.items || data.Items || [])
     .map((item): Product | null => {
       if (!item.itemCode || !item.itemName || !item.itemUrl) return null;
       const price = Number(item.itemPrice);

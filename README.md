@@ -124,6 +124,7 @@ cp .env.local.example .env.local
 ```
 RAKUTEN_APPLICATION_ID=your_rakuten_app_id_here
 RAKUTEN_ACCESS_KEY=your_rakuten_access_key_here
+RAKUTEN_APPLICATION_URL=https://your-app.example.com
 ```
 
 5. 開発サーバーを再起動：

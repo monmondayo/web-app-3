@@ -44,6 +44,7 @@ VercelはNext.js開発元が提供するホスティングサービスで、Next
 ```
 RAKUTEN_APPLICATION_ID=your_rakuten_app_id_here
 RAKUTEN_ACCESS_KEY=your_rakuten_access_key_here
+RAKUTEN_APPLICATION_URL=https://your-app.example.com
 AMAZON_CREATORS_CLIENT_ID=your_creators_api_client_id
 AMAZON_CREATORS_CLIENT_SECRET=your_creators_api_client_secret
 AMAZON_CREATORS_CREDENTIAL_VERSION=3.3
