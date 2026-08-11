@@ -39,19 +39,19 @@ VercelはNext.js開発元が提供するホスティングサービスで、Next
 
 #### 環境変数（オプション）
 
-現在はモックデータで動作するため、環境変数の設定は不要です。
-
-将来的にAPI統合する場合は、以下を設定：
+外部サービスからリアルタイムの商品情報を取得する場合は、以下を設定：
 
 ```
 RAKUTEN_APPLICATION_ID=your_rakuten_app_id_here
-AMAZON_ACCESS_KEY=your_amazon_access_key
-AMAZON_SECRET_KEY=your_amazon_secret_key
+RAKUTEN_ACCESS_KEY=your_rakuten_access_key_here
+AMAZON_CREATORS_CLIENT_ID=your_creators_api_client_id
+AMAZON_CREATORS_CLIENT_SECRET=your_creators_api_client_secret
+AMAZON_CREATORS_CREDENTIAL_VERSION=3.3
 AMAZON_ASSOCIATE_TAG=your_amazon_associate_tag
 YAHOO_CLIENT_ID=your_yahoo_client_id_here
 ```
 
-環境変数は「Environment Variables」セクションで設定できます。
+環境変数は「Environment Variables」セクションでProduction、Preview、Developmentの必要な環境に設定し、変更後に再デプロイしてください。認証情報がないサービスは画面に「未設定」と表示され、すべての外部サービスで結果がない場合はモックデータへフォールバックします。
 
 #### デプロイ実行
 

@@ -1,7 +1,68 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { searchProducts } from '@/lib/mockData';
-import { Product } from '@/lib/types';
-import crypto from 'crypto';
+import {
+  Product,
+  ServiceSearchStatus,
+  ServiceStatuses,
+} from '@/lib/types';
+
+type ProviderName = keyof ServiceStatuses;
+
+interface ProviderResult {
+  products: Product[];
+  status: ServiceSearchStatus;
+}
+
+interface AmazonAccessToken {
+  accessToken: string;
+  credentialVersion: string;
+  expiresAt: number;
+}
+
+interface RakutenItem {
+  itemCode?: string;
+  itemName?: string;
+  itemPrice?: number;
+  itemUrl?: string;
+  affiliateUrl?: string;
+  shopName?: string;
+  mediumImageUrls?: Array<string | { imageUrl?: string }>;
+  smallImageUrls?: Array<string | { imageUrl?: string }>;
+}
+
+interface AmazonItem {
+  asin?: string;
+  detailPageURL?: string;
+  images?: {
+    primary?: {
+      large?: { url?: string };
+      medium?: { url?: string };
+    };
+  };
+  itemInfo?: {
+    title?: { displayValue?: string };
+  };
+  offersV2?: {
+    listings?: Array<{
+      merchantInfo?: { name?: string };
+      price?: { money?: { amount?: number } };
+    }>;
+  };
+}
+
+class ProviderError extends Error {
+  constructor(
+    public readonly provider: ProviderName,
+    public readonly statusCode?: number,
+    public readonly errorCode?: string,
+  ) {
+    super(`${provider} provider request failed`);
+    this.name = 'ProviderError';
+  }
+}
+
+let amazonTokenCache: AmazonAccessToken | null = null;
+let amazonTokenRequest: Promise<AmazonAccessToken> | null = null;
 
 /**
  * 指数バックオフ付きリトライを行うfetch
@@ -10,7 +71,7 @@ async function fetchWithRetry(
   url: string,
   options: RequestInit = {},
   maxRetries: number = 3,
-  baseDelay: number = 1000
+  baseDelay: number = 1000,
 ): Promise<Response> {
   let lastError: Error | null = null;
 
@@ -18,24 +79,21 @@ async function fetchWithRetry(
     try {
       const response = await fetch(url, {
         ...options,
-        signal: AbortSignal.timeout(10000) // 10秒タイムアウト
+        signal: AbortSignal.timeout(10000),
       });
 
-      // 5xx エラーの場合はリトライ
       if (response.status >= 500 && attempt < maxRetries - 1) {
         const delay = baseDelay * Math.pow(2, attempt);
-        await new Promise(resolve => setTimeout(resolve, delay));
+        await new Promise((resolve) => setTimeout(resolve, delay));
         continue;
       }
 
       return response;
     } catch (error) {
       lastError = error as Error;
-      // タイムアウトやネットワークエラーの場合はリトライ
       if (attempt < maxRetries - 1) {
         const delay = baseDelay * Math.pow(2, attempt);
-        await new Promise(resolve => setTimeout(resolve, delay));
-        continue;
+        await new Promise((resolve) => setTimeout(resolve, delay));
       }
     }
   }
@@ -43,281 +101,416 @@ async function fetchWithRetry(
   throw lastError || new Error('Max retries exceeded');
 }
 
+function getErrorCode(body: string): string | undefined {
+  try {
+    const parsed = JSON.parse(body) as Record<string, unknown>;
+    if (typeof parsed.error === 'string') return parsed.error;
+    if (typeof parsed.code === 'string') return parsed.code;
+    if (typeof parsed.__type === 'string') return parsed.__type;
+
+    for (const key of ['errors', 'Errors']) {
+      const errors = parsed[key];
+      if (!Array.isArray(errors) || errors.length === 0) continue;
+      const first = errors[0];
+      if (!first || typeof first !== 'object') continue;
+      const error = first as Record<string, unknown>;
+      if (typeof error.code === 'string') return error.code;
+      if (typeof error.Code === 'string') return error.Code;
+    }
+  } catch {
+    // 外部サービスのHTMLエラー等は公開・記録しない
+  }
+
+  return undefined;
+}
+
+async function throwProviderError(
+  provider: ProviderName,
+  response: Response,
+): Promise<never> {
+  const body = await response.text().catch(() => '');
+  throw new ProviderError(provider, response.status, getErrorCode(body));
+}
+
+function firstImageUrl(
+  images: Array<string | { imageUrl?: string }> | undefined,
+): string {
+  const image = images?.[0];
+  if (typeof image === 'string') return image;
+  return image?.imageUrl || '';
+}
+
 /**
- * 楽天市場APIから商品を検索
+ * 楽天市場商品検索API 2026-07-01から商品を検索
  */
 async function searchRakuten(keyword: string): Promise<Product[]> {
-  const RAKUTEN_APP_ID = process.env.RAKUTEN_APPLICATION_ID;
+  const applicationId = process.env.RAKUTEN_APPLICATION_ID?.trim();
+  const accessKey = process.env.RAKUTEN_ACCESS_KEY?.trim();
 
-  if (!RAKUTEN_APP_ID) {
-    throw new Error('RAKUTEN_APPLICATION_ID is not set');
+  if (!applicationId || !accessKey) {
+    throw new Error('Rakuten credentials are not configured');
   }
 
-  // キーワードのサニタイズ（空白のトリム、連続空白の除去）
   const sanitizedKeyword = keyword.trim().replace(/\s+/g, ' ');
-  if (!sanitizedKeyword) {
-    return [];
-  }
+  if (!sanitizedKeyword) return [];
 
-  // 安定版APIバージョン 20170706 を使用
-  const url = new URL('https://app.rakuten.co.jp/services/api/IchibaItem/Search/20170706');
-  url.searchParams.append('format', 'json');
-  url.searchParams.append('keyword', sanitizedKeyword);
-  url.searchParams.append('applicationId', RAKUTEN_APP_ID);
-  url.searchParams.append('hits', '10');
-  // sortパラメータを削除（デフォルトのstandard順を使用）
+  const url = new URL(
+    'https://openapi.rakuten.co.jp/ichibams/api/IchibaItem/Search/20260701',
+  );
+  url.searchParams.set('format', 'json');
+  url.searchParams.set('formatVersion', '2');
+  url.searchParams.set('keyword', sanitizedKeyword);
+  url.searchParams.set('applicationId', applicationId);
+  url.searchParams.set('accessKey', accessKey);
+  url.searchParams.set('hits', '10');
 
   const response = await fetchWithRetry(url.toString());
 
-  if (!response.ok) {
-    const errorText = await response.text().catch(() => '');
-    throw new Error(`Rakuten API error: ${response.status} ${errorText}`);
-  }
+  if (!response.ok) await throwProviderError('rakuten', response);
 
-  const data = await response.json();
+  const data = (await response.json()) as { items?: RakutenItem[] };
+  return (data.items || [])
+    .map((item): Product | null => {
+      if (!item.itemCode || !item.itemName || !item.itemUrl) return null;
+      const price = Number(item.itemPrice);
+      if (!Number.isFinite(price) || price <= 0) return null;
 
-  if (!data.Items || data.Items.length === 0) {
-    return [];
-  }
-
-  // 楽天APIのレスポンスをProduct型に変換
-  return data.Items.map((item: any, index: number) => ({
-    id: `rakuten_${item.Item.itemCode}`,
-    name: item.Item.itemName,
-    price: item.Item.itemPrice,
-    imageUrl: item.Item.mediumImageUrls?.[0]?.imageUrl || item.Item.smallImageUrls?.[0]?.imageUrl || '',
-    shopName: item.Item.shopName,
-    condition: 'new' as const,
-    url: item.Item.itemUrl, // 商品ページURL（API規約準拠）
-    affiliateUrl: item.Item.affiliateUrl // アフィリエイトURL
-  }));
+      return {
+        id: `rakuten_${item.itemCode}`,
+        name: item.itemName,
+        price,
+        imageUrl:
+          firstImageUrl(item.mediumImageUrls) ||
+          firstImageUrl(item.smallImageUrls),
+        shopName: item.shopName || '楽天市場',
+        condition: 'new',
+        url: item.itemUrl,
+        affiliateUrl: item.affiliateUrl,
+      };
+    })
+    .filter((product): product is Product => product !== null);
 }
 
 /**
  * Yahoo!ショッピングAPIから商品を検索
  */
 async function searchYahoo(keyword: string): Promise<Product[]> {
-  const YAHOO_CLIENT_ID = process.env.YAHOO_CLIENT_ID;
+  const clientId = process.env.YAHOO_CLIENT_ID;
+  if (!clientId) throw new Error('Yahoo credentials are not configured');
 
-  if (!YAHOO_CLIENT_ID) {
-    throw new Error('YAHOO_CLIENT_ID is not set');
-  }
-
-  const url = new URL('https://shopping.yahooapis.jp/ShoppingWebService/V3/itemSearch');
-  url.searchParams.append('appid', YAHOO_CLIENT_ID);
-  url.searchParams.append('query', keyword);
-  url.searchParams.append('results', '10');
-  url.searchParams.append('sort', '-price'); // 価格が高い順
+  const url = new URL(
+    'https://shopping.yahooapis.jp/ShoppingWebService/V3/itemSearch',
+  );
+  url.searchParams.set('appid', clientId);
+  url.searchParams.set('query', keyword);
+  url.searchParams.set('results', '10');
+  url.searchParams.set('sort', '-price');
 
   const response = await fetchWithRetry(url.toString());
+  if (!response.ok) await throwProviderError('yahoo', response);
 
-  if (!response.ok) {
-    const errorText = await response.text().catch(() => '');
-    throw new Error(`Yahoo API error: ${response.status} ${errorText}`);
-  }
-
-  const data = await response.json();
-
-  if (!data.hits || data.hits.length === 0) {
-    return [];
-  }
-
-  // Yahoo APIのレスポンスをProduct型に変換
-  return data.hits.map((item: any) => ({
-    id: `yahoo_${item.code}`,
-    name: item.name,
-    price: parseInt(item.price),
-    imageUrl: item.image?.medium || item.image?.small || '',
-    shopName: item.seller?.name || 'Yahoo!ショッピング',
-    condition: 'new' as const,
-    url: item.url, // 商品ページURL（API規約準拠）
-    affiliateUrl: item.url // Yahoo!ショッピングの場合、通常URLと同じ
-  }));
-}
-
-/**
- * Amazon Product Advertising APIから商品を検索
- * PA-API 5.0を使用（署名バージョン4が必要）
- */
-async function searchAmazon(keyword: string): Promise<Product[]> {
-  const ACCESS_KEY = process.env.AMAZON_ACCESS_KEY;
-  const SECRET_KEY = process.env.AMAZON_SECRET_KEY;
-  const ASSOCIATE_TAG = process.env.AMAZON_ASSOCIATE_TAG;
-  const REGION = 'us-west-2'; // PA-API endpoint (日本の場合は us-west-2)
-  const HOST = 'webservices.amazon.co.jp'; // 日本のエンドポイント
-  const MARKETPLACE = 'www.amazon.co.jp';
-
-  if (!ACCESS_KEY || !SECRET_KEY || !ASSOCIATE_TAG) {
-    throw new Error('Amazon credentials not set');
-  }
-
-  // PA-API 5.0 リクエストペイロード
-  const payload = JSON.stringify({
-    Keywords: keyword,
-    Resources: [
-      'Images.Primary.Large',
-      'ItemInfo.Title',
-      'Offers.Listings.Price',
-      'ItemInfo.ByLineInfo'
-    ],
-    SearchIndex: 'All',
-    ItemCount: 10,
-    PartnerTag: ASSOCIATE_TAG,
-    PartnerType: 'Associates',
-    Marketplace: MARKETPLACE
-  });
-
-  // 署名バージョン4の生成
-  const service = 'ProductAdvertisingAPI';
-  const target = 'com.amazon.paapi5.v1.ProductAdvertisingAPIv1.SearchItems';
-  const now = new Date();
-  const amzDate = now.toISOString().replace(/[:-]|\.\d{3}/g, '');
-  const dateStamp = amzDate.slice(0, 8);
-
-  // リクエストヘッダー
-  const headers: Record<string, string> = {
-    'content-encoding': 'amz-1.0',
-    'content-type': 'application/json; charset=utf-8',
-    'host': HOST,
-    'x-amz-date': amzDate,
-    'x-amz-target': target
+  const data = (await response.json()) as {
+    hits?: Array<{
+      code?: string;
+      name?: string;
+      price?: string | number;
+      image?: { medium?: string; small?: string };
+      seller?: { name?: string };
+      url?: string;
+    }>;
   };
 
-  // 署名計算
-  const canonicalHeaders = Object.keys(headers)
-    .sort()
-    .map(key => `${key}:${headers[key]}\n`)
-    .join('');
-  const signedHeaders = Object.keys(headers).sort().join(';');
-  const payloadHash = crypto.createHash('sha256').update(payload).digest('hex');
-
-  const canonicalRequest = [
-    'POST',
-    '/paapi5/searchitems',
-    '',
-    canonicalHeaders,
-    signedHeaders,
-    payloadHash
-  ].join('\n');
-
-  const credentialScope = `${dateStamp}/${REGION}/${service}/aws4_request`;
-  const stringToSign = [
-    'AWS4-HMAC-SHA256',
-    amzDate,
-    credentialScope,
-    crypto.createHash('sha256').update(canonicalRequest).digest('hex')
-  ].join('\n');
-
-  // 署名キーの生成
-  const getSignatureKey = (key: string, dateStamp: string, regionName: string, serviceName: string) => {
-    const kDate = crypto.createHmac('sha256', `AWS4${key}`).update(dateStamp).digest();
-    const kRegion = crypto.createHmac('sha256', kDate).update(regionName).digest();
-    const kService = crypto.createHmac('sha256', kRegion).update(serviceName).digest();
-    const kSigning = crypto.createHmac('sha256', kService).update('aws4_request').digest();
-    return kSigning;
-  };
-
-  const signingKey = getSignatureKey(SECRET_KEY, dateStamp, REGION, service);
-  const signature = crypto.createHmac('sha256', signingKey).update(stringToSign).digest('hex');
-
-  // Authorization ヘッダー
-  const authorizationHeader = `AWS4-HMAC-SHA256 Credential=${ACCESS_KEY}/${credentialScope}, SignedHeaders=${signedHeaders}, Signature=${signature}`;
-
-  try {
-    const response = await fetch(`https://${HOST}/paapi5/searchitems`, {
-      method: 'POST',
-      headers: {
-        ...headers,
-        'Authorization': authorizationHeader
-      },
-      body: payload,
-      signal: AbortSignal.timeout(10000) // 10秒タイムアウト
-    });
-
-    if (!response.ok) {
-      const errorBody = await response.text();
-      // 本番環境ではエラー詳細をログに出力しない（機密情報保護）
-      if (process.env.NODE_ENV === 'development') {
-        console.error('Amazon API error response:', errorBody);
-      }
-      throw new Error(`Amazon API error: ${response.status}`);
-    }
-
-    const data = await response.json();
-
-    if (!data.SearchResult?.Items || data.SearchResult.Items.length === 0) {
-      return [];
-    }
-
-    // Amazon APIのレスポンスをProduct型に変換
-    return data.SearchResult.Items.map((item: any) => {
-      const asin = item.ASIN;
-      const productUrl = `https://www.amazon.co.jp/dp/${asin}`;
-      const affiliateUrl = `https://www.amazon.co.jp/dp/${asin}?tag=${ASSOCIATE_TAG}`;
-
-      // 価格の取得（円単位で返す）
-      let price = 0;
-      if (item.Offers?.Listings?.[0]?.Price) {
-        const priceInfo = item.Offers.Listings[0].Price;
-        price = priceInfo.Amount || 0;
-      }
+  return (data.hits || [])
+    .map((item): Product | null => {
+      if (!item.code || !item.name || !item.url) return null;
+      const price = Number(item.price);
+      if (!Number.isFinite(price) || price <= 0) return null;
 
       return {
-        id: `amazon_${asin}`,
-        name: item.ItemInfo?.Title?.DisplayValue || 'タイトル不明',
-        price: price,
-        imageUrl: item.Images?.Primary?.Large?.URL || item.Images?.Primary?.Medium?.URL || '',
-        shopName: 'Amazon.co.jp',
-        condition: 'new' as const,
-        url: productUrl, // 商品ページURL（API規約準拠）
-        affiliateUrl: affiliateUrl // アフィリエイトURL（PA-API規約準拠）
+        id: `yahoo_${item.code}`,
+        name: item.name,
+        price,
+        imageUrl: item.image?.medium || item.image?.small || '',
+        shopName: item.seller?.name || 'Yahoo!ショッピング',
+        condition: 'new',
+        url: item.url,
+        affiliateUrl: item.url,
       };
-    }).filter((product: Product) => product.price > 0); // 価格が0のものは除外
-  } catch (error) {
-    console.error('Amazon PA-API error:', error);
-    throw error;
+    })
+    .filter((product): product is Product => product !== null);
+}
+
+function getAmazonCredentials() {
+  return {
+    clientId: process.env.AMAZON_CREATORS_CLIENT_ID?.trim(),
+    clientSecret: process.env.AMAZON_CREATORS_CLIENT_SECRET?.trim(),
+    credentialVersion:
+      process.env.AMAZON_CREATORS_CREDENTIAL_VERSION?.trim() || '3.3',
+    associateTag: process.env.AMAZON_ASSOCIATE_TAG?.trim(),
+  };
+}
+
+async function requestAmazonAccessToken(): Promise<AmazonAccessToken> {
+  const { clientId, clientSecret, credentialVersion } = getAmazonCredentials();
+  if (!clientId || !clientSecret) {
+    throw new Error('Amazon Creators API credentials are not configured');
   }
+
+  let tokenUrl: string;
+  let headers: HeadersInit;
+  let body: string;
+
+  if (credentialVersion === '2.3') {
+    tokenUrl =
+      'https://creatorsapi.auth.us-west-2.amazoncognito.com/oauth2/token';
+    headers = { 'content-type': 'application/x-www-form-urlencoded' };
+    body = new URLSearchParams({
+      grant_type: 'client_credentials',
+      client_id: clientId,
+      client_secret: clientSecret,
+      scope: 'creatorsapi/default',
+    }).toString();
+  } else if (credentialVersion === '3.3') {
+    tokenUrl = 'https://api.amazon.co.jp/auth/o2/token';
+    headers = { 'content-type': 'application/json' };
+    body = JSON.stringify({
+      grant_type: 'client_credentials',
+      client_id: clientId,
+      client_secret: clientSecret,
+      scope: 'creatorsapi::default',
+    });
+  } else {
+    throw new ProviderError(
+      'amazon',
+      undefined,
+      'unsupported_credential_version',
+    );
+  }
+
+  const response = await fetchWithRetry(tokenUrl, {
+    method: 'POST',
+    headers,
+    body,
+  });
+  if (!response.ok) await throwProviderError('amazon', response);
+
+  const data = (await response.json()) as {
+    access_token?: string;
+    expires_in?: number;
+  };
+  if (!data.access_token) {
+    throw new ProviderError('amazon', response.status, 'missing_access_token');
+  }
+
+  const expiresInSeconds = Number(data.expires_in) || 3600;
+  return {
+    accessToken: data.access_token,
+    credentialVersion,
+    expiresAt: Date.now() + Math.max(expiresInSeconds - 60, 60) * 1000,
+  };
+}
+
+async function getAmazonAccessToken(): Promise<AmazonAccessToken> {
+  const credentialVersion = getAmazonCredentials().credentialVersion;
+  if (
+    amazonTokenCache &&
+    amazonTokenCache.credentialVersion === credentialVersion &&
+    amazonTokenCache.expiresAt > Date.now()
+  ) {
+    return amazonTokenCache;
+  }
+
+  if (!amazonTokenRequest) {
+    amazonTokenRequest = requestAmazonAccessToken()
+      .then((token) => {
+        amazonTokenCache = token;
+        return token;
+      })
+      .finally(() => {
+        amazonTokenRequest = null;
+      });
+  }
+
+  return amazonTokenRequest;
 }
 
 /**
- * 複数のソースから商品を検索（並列実行）
+ * Amazon Creators APIから商品を検索
  */
+async function searchAmazon(keyword: string): Promise<Product[]> {
+  const { associateTag } = getAmazonCredentials();
+  if (!associateTag) {
+    throw new Error('Amazon associate tag is not configured');
+  }
+
+  const token = await getAmazonAccessToken();
+  const authorization = token.credentialVersion.startsWith('2.')
+    ? `Bearer ${token.accessToken}, Version ${token.credentialVersion}`
+    : `Bearer ${token.accessToken}`;
+
+  const response = await fetchWithRetry(
+    'https://creatorsapi.amazon/catalog/v1/searchItems',
+    {
+      method: 'POST',
+      headers: {
+        authorization,
+        'content-type': 'application/json',
+        'x-marketplace': 'www.amazon.co.jp',
+      },
+      body: JSON.stringify({
+        keywords: keyword,
+        resources: [
+          'images.primary.large',
+          'images.primary.medium',
+          'itemInfo.title',
+          'offersV2.listings.merchantInfo',
+          'offersV2.listings.price',
+        ],
+        searchIndex: 'All',
+        itemCount: 10,
+        partnerTag: associateTag,
+        marketplace: 'www.amazon.co.jp',
+      }),
+    },
+  );
+
+  if (!response.ok) await throwProviderError('amazon', response);
+
+  const data = (await response.json()) as {
+    searchResult?: { items?: AmazonItem[] };
+  };
+
+  return (data.searchResult?.items || [])
+    .map((item): Product | null => {
+      if (!item.asin) return null;
+      const listing = item.offersV2?.listings?.[0];
+      const price = Number(listing?.price?.money?.amount);
+      if (!Number.isFinite(price) || price <= 0) return null;
+
+      const productUrl =
+        item.detailPageURL ||
+        `https://www.amazon.co.jp/dp/${item.asin}?tag=${encodeURIComponent(associateTag)}`;
+
+      return {
+        id: `amazon_${item.asin}`,
+        name: item.itemInfo?.title?.displayValue || 'タイトル不明',
+        price: Math.round(price),
+        imageUrl:
+          item.images?.primary?.large?.url ||
+          item.images?.primary?.medium?.url ||
+          '',
+        shopName: listing?.merchantInfo?.name || 'Amazon.co.jp',
+        condition: 'new',
+        url: productUrl,
+        affiliateUrl: productUrl,
+      };
+    })
+    .filter((product): product is Product => product !== null);
+}
+
+function publicErrorMessage(provider: ProviderName, error: unknown): string {
+  const status = error instanceof ProviderError ? error.statusCode : undefined;
+
+  if (status === 429) {
+    return 'APIのリクエスト上限に達しました。時間をおいて再検索してください。';
+  }
+  if (status && status >= 500) {
+    return 'サービスが一時的に利用できません。時間をおいて再検索してください。';
+  }
+  if (status === 401 || status === 403) {
+    return provider === 'amazon'
+      ? 'Creators APIの認証または利用権限を確認してください。'
+      : 'APIの認証情報を確認してください。';
+  }
+
+  return '検索APIでエラーが発生しました。設定または実行ログを確認してください。';
+}
+
+async function runProvider(
+  provider: ProviderName,
+  configured: boolean,
+  notConfiguredMessage: string,
+  search: () => Promise<Product[]>,
+): Promise<ProviderResult> {
+  if (!configured) {
+    return {
+      products: [],
+      status: { state: 'not_configured', message: notConfiguredMessage },
+    };
+  }
+
+  try {
+    const products = await search();
+    return {
+      products,
+      status:
+        products.length > 0
+          ? { state: 'ok', message: `${products.length}件取得しました。` }
+          : { state: 'empty', message: '該当する商品がありませんでした。' },
+    };
+  } catch (error) {
+    const providerError = error instanceof ProviderError ? error : undefined;
+    const cause = error instanceof Error ? error.cause : undefined;
+    const causeCode =
+      cause && typeof cause === 'object' && 'code' in cause
+        ? String((cause as { code?: unknown }).code)
+        : undefined;
+    console.warn(`${provider} API failed`, {
+      status: providerError?.statusCode,
+      code: providerError?.errorCode,
+      errorName: error instanceof Error ? error.name : typeof error,
+      causeCode,
+    });
+    return {
+      products: [],
+      status: { state: 'error', message: publicErrorMessage(provider, error) },
+    };
+  }
+}
+
 async function searchFromMultipleSources(keyword: string): Promise<{
-  rakuten: Product[],
-  amazon: Product[],
-  yahoo: Product[]
+  rakuten: Product[];
+  amazon: Product[];
+  yahoo: Product[];
+  statuses: ServiceStatuses;
 }> {
-  // すべてのAPIを並列で実行
-  const [rakutenResult, amazonResult, yahooResult] = await Promise.allSettled([
-    // 楽天市場API
-    process.env.RAKUTEN_APPLICATION_ID
-      ? searchRakuten(keyword).catch(err => {
-          console.warn('Rakuten API failed:', err);
-          return [];
-        })
-      : Promise.resolve([]),
-
-    // Amazon Product Advertising API
-    process.env.AMAZON_ACCESS_KEY && process.env.AMAZON_SECRET_KEY && process.env.AMAZON_ASSOCIATE_TAG
-      ? searchAmazon(keyword).catch(err => {
-          console.warn('Amazon API failed:', err);
-          return [];
-        })
-      : Promise.resolve([]),
-
-    // Yahoo!ショッピングAPI
-    process.env.YAHOO_CLIENT_ID
-      ? searchYahoo(keyword).catch(err => {
-          console.warn('Yahoo API failed:', err);
-          return [];
-        })
-      : Promise.resolve([])
+  const amazonCredentials = getAmazonCredentials();
+  const [rakuten, amazon, yahoo] = await Promise.all([
+    runProvider(
+      'rakuten',
+      Boolean(
+        process.env.RAKUTEN_APPLICATION_ID && process.env.RAKUTEN_ACCESS_KEY,
+      ),
+      'Application IDとAccess Keyが未設定です。',
+      () => searchRakuten(keyword),
+    ),
+    runProvider(
+      'amazon',
+      Boolean(
+        amazonCredentials.clientId &&
+          amazonCredentials.clientSecret &&
+          amazonCredentials.associateTag,
+      ),
+      'Creators APIのClient ID、Client Secret、Associate Tagが未設定です。',
+      () => searchAmazon(keyword),
+    ),
+    runProvider(
+      'yahoo',
+      Boolean(process.env.YAHOO_CLIENT_ID),
+      'Client IDが未設定です。',
+      () => searchYahoo(keyword),
+    ),
   ]);
 
   return {
-    rakuten: rakutenResult.status === 'fulfilled' ? rakutenResult.value : [],
-    amazon: amazonResult.status === 'fulfilled' ? amazonResult.value : [],
-    yahoo: yahooResult.status === 'fulfilled' ? yahooResult.value : []
+    rakuten: rakuten.products,
+    amazon: amazon.products,
+    yahoo: yahoo.products,
+    statuses: {
+      rakuten: rakuten.status,
+      amazon: amazon.status,
+      yahoo: yahoo.status,
+    },
   };
 }
 
@@ -327,30 +520,29 @@ async function searchFromMultipleSources(keyword: string): Promise<{
  */
 export async function GET(request: NextRequest) {
   try {
-    const searchParams = request.nextUrl.searchParams;
-    const keyword = searchParams.get('keyword');
-
-    if (!keyword) {
+    const keyword = request.nextUrl.searchParams.get('keyword');
+    if (!keyword?.trim()) {
       return NextResponse.json(
         { error: 'キーワードを指定してください' },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
-    // 複数ソースから並列検索
     const results = await searchFromMultipleSources(keyword);
-
-    // すべて空の場合はモックデータを返す
-    const allEmpty = results.rakuten.length === 0 && results.amazon.length === 0 && results.yahoo.length === 0;
+    const allEmpty =
+      results.rakuten.length === 0 &&
+      results.amazon.length === 0 &&
+      results.yahoo.length === 0;
 
     if (allEmpty) {
-      const mockProducts = searchProducts(keyword);
       return NextResponse.json({
         rakuten: [],
         amazon: [],
         yahoo: [],
-        mock: mockProducts,
-        message: 'モックデータを表示中。楽天市場API、Amazon PA-API、Yahoo!ショッピングAPIを設定すると、リアルタイムで商品検索できます。'
+        mock: searchProducts(keyword),
+        statuses: results.statuses,
+        message:
+          '外部サービスの結果がないため、利用可能なモックデータを表示しています。サービス別の状態をご確認ください。',
       });
     }
 
@@ -358,13 +550,14 @@ export async function GET(request: NextRequest) {
       rakuten: results.rakuten,
       amazon: results.amazon,
       yahoo: results.yahoo,
-      mock: []
+      mock: [],
+      statuses: results.statuses,
     });
   } catch (error) {
     console.error('Search API error:', error);
     return NextResponse.json(
       { error: '検索中にエラーが発生しました' },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
