@@ -112,17 +112,18 @@ npm start
 #### 1. 楽天市場API（推奨）
 
 1. [楽天ウェブサービス](https://webservice.rakuten.co.jp/)にアクセス
-2. アプリIDを取得（無料）
+2. アプリIDとAccess Keyを取得（無料）
 3. `.env.local` ファイルを作成：
 
 ```bash
 cp .env.local.example .env.local
 ```
 
-4. `.env.local` にアプリIDを設定：
+4. `.env.local` に認証情報を設定：
 
 ```
 RAKUTEN_APPLICATION_ID=your_rakuten_app_id_here
+RAKUTEN_ACCESS_KEY=your_rakuten_access_key_here
 ```
 
 5. 開発サーバーを再起動：
@@ -131,23 +132,26 @@ RAKUTEN_APPLICATION_ID=your_rakuten_app_id_here
 npm run dev
 ```
 
-#### 2. Amazon Product Advertising API（オプション）
+#### 2. Amazon Creators API（オプション）
 
-1. [Amazon Product Advertising API](https://affiliate.amazon.co.jp/)にアクセス
+1. [Amazon Creators API](https://affiliate-program.amazon.com/creatorsapi/docs/en-us/onboarding)にアクセス
 2. Amazonアソシエイト・プログラムに参加（審査が必要）
-3. [PA-API利用申請](https://affiliate.amazon.co.jp/assoc_credentials/home)から認証情報を取得
+3. Creators APIのClient IDとClient Secretを取得
 4. `.env.local` に追加：
 
 ```
-AMAZON_ACCESS_KEY=your_amazon_access_key
-AMAZON_SECRET_KEY=your_amazon_secret_key
+AMAZON_CREATORS_CLIENT_ID=your_creators_api_client_id
+AMAZON_CREATORS_CLIENT_SECRET=your_creators_api_client_secret
+AMAZON_CREATORS_CREDENTIAL_VERSION=3.3
 AMAZON_ASSOCIATE_TAG=your_amazon_associate_tag
 ```
 
-**注意**: Amazon PA-APIは審査制で、以下の条件が必要です：
+日本向けの新しいCredential Versionは`3.3`です。旧Cognito Credentialを利用する場合は`2.3`を指定してください。
+
+**注意**: Amazon Creators APIは審査制です：
 - Amazonアソシエイト・プログラムに登録済みであること
-- 過去180日以内に3件以上の適格販売があること
-- PA-API利用規約に同意すること
+- Creators APIへのアクセスが承認済みであること
+- 対象マーケットプレイスの有効なアソシエイトタグを使用すること
 
 #### 3. Yahoo!ショッピングAPI（オプション）
 
@@ -159,14 +163,11 @@ AMAZON_ASSOCIATE_TAG=your_amazon_associate_tag
 YAHOO_CLIENT_ID=your_yahoo_client_id_here
 ```
 
-### 検索ソースの優先順位
+### 検索ソース
 
-1. **楽天市場API**（設定されている場合）
-2. **Amazon PA-API**（楽天が失敗した場合、設定されている場合）
-3. **Yahoo!ショッピングAPI**（楽天とAmazonが失敗した場合）
-4. **モックデータ**（APIが設定されていない場合）
+楽天市場API、Amazon Creators API、Yahoo!ショッピングAPIを並列検索します。すべての外部サービスで結果がない場合のみモックデータへフォールバックします。
 
-設定後は、検索結果に「楽天市場」「Amazon.co.jp」「Yahoo!ショッピング」「モックデータ」のバッジが表示されます。
+検索結果にはサービスごとに「取得済み」「該当なし」「未設定」「エラー」の状態が表示されます。
 
 ### ビックカメラ・ヨドバシカメラについて
 
@@ -175,7 +176,7 @@ YAHOO_CLIENT_ID=your_yahoo_client_id_here
 **代替案**：
 - 手動入力モードを使用して、各サイトで確認した価格を入力
 - 楽天市場やYahoo!ショッピングに出店している場合は、それらのAPIで検索可能
-- Amazonに出品されている商品も多いため、Amazon PA-APIで検索可能
+- Amazonに出品されている商品も多いため、Amazon Creators APIで検索可能
 
 ## 📊 計算ロジックの詳細
 
@@ -247,7 +248,7 @@ web-app-3/
 
 ## ⚠️ 重要：API利用規約の遵守について
 
-このアプリケーションは、楽天市場API、Amazon Product Advertising API、Yahoo!ショッピングAPIを利用しています。これらのAPIを使用する際は、各サービスの利用規約を遵守する必要があります。
+このアプリケーションは、楽天市場API、Amazon Creators API、Yahoo!ショッピングAPIを利用しています。これらのAPIを使用する際は、各サービスの利用規約を遵守する必要があります。
 
 ### 必須の対応事項
 
@@ -256,7 +257,7 @@ web-app-3/
 - 本アプリでは検索結果に「商品ページを見る」ボタンを表示しています
 
 #### 2. アフィリエイトリンクの使用（実装済み）
-- Amazon PA-APIを使用する場合、アソシエイトタグを含むリンクを提供する必要があります
+- Amazon Creators APIを使用する場合、アソシエイトタグを含むAPI提供リンクを使用します
 - 楽天市場APIでも、アフィリエイトURLが提供される場合は優先的に使用します
 
 #### 3. 画像の使用制限
@@ -267,7 +268,7 @@ web-app-3/
 ### 各API利用規約リンク
 
 - [楽天ウェブサービス利用規約](https://webservice.rakuten.co.jp/agreement/)
-- [Amazon Product Advertising API ライセンス契約](https://affiliate.amazon.co.jp/help/operating/agreement)
+- [Amazon Creators API ライセンス契約](https://affiliate-program.amazon.com/creatorsapi/docs/en-us/license-agreement)
 - [Yahoo!ショッピング API利用規約](https://e.developer.yahoo.co.jp/webservices/license.html)
 
 ### 推奨される使用方法

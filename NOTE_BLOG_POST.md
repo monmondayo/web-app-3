@@ -51,7 +51,7 @@
 
 - **商品検索API** (`/api/search`)
   - 楽天市場API
-  - Amazon Product Advertising API
+  - Amazon Creators API
   - Yahoo!ショッピングAPI
   - 複数のECサイトから商品データを取得
 
@@ -131,7 +131,7 @@ APIキーがなくても、以下のキーワードで試せるモックデー�
 実際のEC商品データを取得するために、以下のAPIに対応：
 
 - **楽天市場API**
-- **Amazon Product Advertising API**
+- **Amazon Creators API**
 - **Yahoo!ショッピングAPI**
 
 ただし、APIキーがない場合でも、モックデータで完全に動作するので、誰でもすぐに試せます。

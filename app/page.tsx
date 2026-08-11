@@ -1,12 +1,46 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Search, Sparkles, Calculator, Crown, PenLine, List, TrendingUp, ExternalLink } from 'lucide-react';
-import { Product, ResaleAnalysis, JissitsuTadaResult } from '@/lib/types';
+import { Search, Sparkles, Calculator, PenLine, List, TrendingUp } from 'lucide-react';
+import {
+  Product,
+  ResaleAnalysis,
+  JissitsuTadaResult,
+  ServiceSearchStatus,
+  ServiceStatuses,
+} from '@/lib/types';
 import { calculateJissitsuTada, calculateResaleValue } from '@/lib/resaleCalculator';
 import ResultCard from '@/components/ResultCard';
 
 type SearchMode = 'search' | 'manual';
+
+function ServiceStatusNotice({ status }: { status?: ServiceSearchStatus }) {
+  if (!status) return null;
+
+  const styles = {
+    ok: 'border-emerald-200 bg-emerald-50 text-emerald-700',
+    empty: 'border-amber-200 bg-amber-50 text-amber-700',
+    not_configured: 'border-gray-200 bg-gray-50 text-gray-600',
+    error: 'border-red-200 bg-red-50 text-red-700',
+  }[status.state];
+
+  const labels = {
+    ok: '取得済み',
+    empty: '該当なし',
+    not_configured: '未設定',
+    error: 'エラー',
+  }[status.state];
+
+  return (
+    <div
+      className={`mb-4 rounded-lg border px-3 py-2 text-xs ${styles}`}
+      role={status.state === 'error' ? 'alert' : 'status'}
+    >
+      <p className="font-bold">{labels}</p>
+      <p className="mt-1 leading-relaxed">{status.message}</p>
+    </div>
+  );
+}
 
 export default function Home() {
   const [searchMode, setSearchMode] = useState<SearchMode>('search');
@@ -18,6 +52,8 @@ export default function Home() {
     yahoo: Product[];
     mock: Product[];
   }>({ rakuten: [], amazon: [], yahoo: [], mock: [] });
+  const [serviceStatuses, setServiceStatuses] =
+    useState<ServiceStatuses | null>(null);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [yearsOfUse, setYearsOfUse] = useState(10);
   const [result, setResult] = useState<{
@@ -42,6 +78,7 @@ export default function Home() {
     setError('');
     setInfoMessage('');
     setSearchResults({ rakuten: [], amazon: [], yahoo: [], mock: [] });
+    setServiceStatuses(null);
     setSelectedProduct(null);
     setResult(null);
 
@@ -59,6 +96,7 @@ export default function Home() {
         yahoo: data.yahoo || [],
         mock: data.mock || []
       });
+      setServiceStatuses(data.statuses || null);
 
       const totalResults = (data.rakuten?.length || 0) + (data.amazon?.length || 0) + (data.yahoo?.length || 0) + (data.mock?.length || 0);
 
@@ -144,7 +182,7 @@ export default function Home() {
       const usedPrice = parseFloat(manualUsedPrice);
 
       // 簡易的な中古相場データを生成（±5%のバラつき）
-      const mockUsedPrices = Array.from({ length: 24 }, (_, i) => {
+      const mockUsedPrices = Array.from({ length: 24 }, () => {
         const variance = (Math.random() - 0.5) * 0.1; // -5% ~ +5%
         return Math.round(usedPrice * (1 + variance));
       });
@@ -324,7 +362,7 @@ export default function Home() {
             </div>
 
             {/* 検索結果 - 3列レイアウト */}
-            {(searchResults.rakuten.length > 0 || searchResults.amazon.length > 0 || searchResults.yahoo.length > 0 || searchResults.mock.length > 0) && !selectedProduct && (
+            {(serviceStatuses || searchResults.rakuten.length > 0 || searchResults.amazon.length > 0 || searchResults.yahoo.length > 0 || searchResults.mock.length > 0) && !selectedProduct && (
               <div className="mb-8">
                 <h3 className="text-2xl font-serif text-gray-800 mb-6 text-center">検索結果</h3>
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -335,6 +373,7 @@ export default function Home() {
                         楽天市場
                       </span>
                     </div>
+                    <ServiceStatusNotice status={serviceStatuses?.rakuten} />
                     <div className="space-y-3 max-h-[600px] overflow-y-auto">
                       {searchResults.rakuten.length > 0 ? (
                         searchResults.rakuten.map((product) => (
@@ -353,9 +392,9 @@ export default function Home() {
                             </div>
                           </div>
                         ))
-                      ) : (
+                      ) : !serviceStatuses ? (
                         <p className="text-gray-500 text-center py-8 text-sm">商品が見つかりませんでした</p>
-                      )}
+                      ) : null}
                     </div>
                   </div>
 
@@ -366,6 +405,7 @@ export default function Home() {
                         Amazon.co.jp
                       </span>
                     </div>
+                    <ServiceStatusNotice status={serviceStatuses?.amazon} />
                     <div className="space-y-3 max-h-[600px] overflow-y-auto">
                       {searchResults.amazon.length > 0 ? (
                         searchResults.amazon.map((product) => (
@@ -384,9 +424,9 @@ export default function Home() {
                             </div>
                           </div>
                         ))
-                      ) : (
+                      ) : !serviceStatuses ? (
                         <p className="text-gray-500 text-center py-8 text-sm">商品が見つかりませんでした</p>
-                      )}
+                      ) : null}
                     </div>
                   </div>
 
@@ -397,6 +437,7 @@ export default function Home() {
                         Yahoo!ショッピング
                       </span>
                     </div>
+                    <ServiceStatusNotice status={serviceStatuses?.yahoo} />
                     <div className="space-y-3 max-h-[600px] overflow-y-auto">
                       {searchResults.yahoo.length > 0 ? (
                         searchResults.yahoo.map((product) => (
@@ -415,9 +456,9 @@ export default function Home() {
                             </div>
                           </div>
                         ))
-                      ) : (
+                      ) : !serviceStatuses ? (
                         <p className="text-gray-500 text-center py-8 text-sm">商品が見つかりませんでした</p>
-                      )}
+                      ) : null}
                     </div>
                   </div>
                 </div>
@@ -621,6 +662,7 @@ export default function Home() {
                 setResult(null);
                 setSelectedProduct(null);
                 setSearchResults({ rakuten: [], amazon: [], yahoo: [], mock: [] });
+                setServiceStatuses(null);
                 setKeyword('');
                 setManualProductName('');
                 setManualNewPrice('');

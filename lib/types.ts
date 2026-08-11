@@ -10,6 +10,23 @@ export interface Product {
   affiliateUrl?: string; // アフィリエイトリンク（オプション）
 }
 
+export type ServiceSearchState =
+  | 'ok'
+  | 'empty'
+  | 'not_configured'
+  | 'error';
+
+export interface ServiceSearchStatus {
+  state: ServiceSearchState;
+  message: string;
+}
+
+export interface ServiceStatuses {
+  rakuten: ServiceSearchStatus;
+  amazon: ServiceSearchStatus;
+  yahoo: ServiceSearchStatus;
+}
+
 // リセールバリュー計算結果の型定義
 export interface ResaleAnalysis {
   estimatedResaleValue: number;
