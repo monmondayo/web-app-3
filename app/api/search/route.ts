@@ -161,11 +161,10 @@ async function searchRakuten(keyword: string): Promise<Product[]> {
   url.searchParams.set('formatVersion', '2');
   url.searchParams.set('keyword', sanitizedKeyword);
   url.searchParams.set('applicationId', applicationId);
+  url.searchParams.set('accessKey', accessKey);
   url.searchParams.set('hits', '10');
 
-  const response = await fetchWithRetry(url.toString(), {
-    headers: { accessKey },
-  });
+  const response = await fetchWithRetry(url.toString());
 
   if (!response.ok) await throwProviderError('rakuten', response);
 
